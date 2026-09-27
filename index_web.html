@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Structural előrehaladás - Tervezési és Gyártástechnológiai Kompetenciafa</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons CDN -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            blueprint: {
+              900: '#07101e',
+              850: '#0c182c',
+              800: '#11223f',
+              700: '#1b345f',
+              line: '#254a85',
+              glow: '#38bdf8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .blueprint-grid {
+      background-color: #07101e;
+      background-image: 
+        radial-gradient(circle, rgba(56, 189, 248, 0.12) 1px, transparent 1px),
+        linear-gradient(to right, rgba(30, 58, 109, 0.3) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(30, 58, 109, 0.3) 1px, transparent 1px);
+      background-size: 20px 20px, 80px 80px, 80px 80px;
+    }
+
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0c182c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e3a6d;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+
+    @keyframes adminPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+      50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+    }
+    .ready-to-unlock {
+      animation: adminPulse 2.2s infinite;
+    }
+
+    @keyframes greenGlowPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); border-color: #10b981; }
+      50% { box-shadow: 0 0 25px 8px rgba(16, 185, 129, 0.4); border-color: #34d399; }
+    }
+    .newly-unlocked-pulse {
+      animation: greenGlowPulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes redGlowPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); border-color: #f43f5e; }
+      50% { box-shadow: 0 0 25px 8px rgba(244, 63, 94, 0.4); border-color: #fb7185; }
+    }
+    .newly-revoked-pulse {
+      animation: redGlowPulse 1.8s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-blueprint-900 text-slate-100 font-sans h-screen flex flex-col overflow-hidden no-select">
+
+  <!-- ==================== TOP NAVIGATION ==================== -->
+  <header class="bg-blueprint-850 border-b border-blueprint-line px-5 py-3 flex items-center justify-between z-30 shadow-lg">
+    <div class="flex items-center space-x-4">
+      <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center text-cyan-400 text-2xl shadow-inner">
+        <i class="ph-bold ph-tree-structure"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-wide text-white flex items-center gap-2">
+          Structural előrehaladás
+          <span id="roleBadge" class="text-xs px-2 py-0.5 rounded font-mono border"></span>
+        </h1>
+        <p class="text-xs text-slate-400 font-medium">Tervezési és Gyártástechnológiai Kompetenciafa (Cloud szinkronizált)</p>
+      </div>
+    </div>
+
+    <!-- Admin Munkatárs Selector Bar -->
+    <div id="adminUserSelectorContainer" class="hidden items-center gap-2 bg-blueprint-800 px-3 py-1.5 rounded-lg border border-amber-500/50">
+      <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-400 mr-1">
+        <i class="ph-bold ph-shield-check text-base"></i>
+        <span class="hidden lg:inline">ADMIN:</span>
+      </div>
+      <label for="engineerSelect" class="text-xs text-slate-300">Profil:</label>
+      <select id="engineerSelect" class="bg-blueprint-900 border border-blueprint-line text-cyan-300 text-xs font-semibold rounded px-2 py-1 focus:outline-none focus:border-amber-400 cursor-pointer max-w-[170px] truncate">
+      </select>
+
+      <button id="adminCreateUserBtn" title="Új munkatárs regisztrálása" class="px-2 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded text-xs font-semibold flex items-center gap-1 transition">
+        <i class="ph-bold ph-user-plus"></i> Új profil
+      </button>
+
+      <button id="adminDeleteUserBtn" title="Kiválasztott munkatárs törlése" class="px-2 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded text-xs font-semibold flex items-center gap-1 transition">
+        <i class="ph ph-trash"></i> Törlés
+      </button>
+    </div>
+
+    <!-- Jobb oldali statisztikák és Kijelentkezés -->
+    <div class="flex items-center space-x-4">
+      <div class="hidden md:flex items-center space-x-3 bg-blueprint-800/80 px-3 py-1.5 rounded-lg border border-blueprint-line">
+        <div class="text-right">
+          <div class="text-[11px] text-slate-400 font-medium">Összesített teljesítés</div>
+          <div class="text-sm font-bold text-cyan-400 font-mono" id="statsProgress">0 / 0 (0%)</div>
+        </div>
+        <div class="w-20 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+          <div id="statsProgressBar" class="h-full bg-cyan-400 transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center pl-3 border-l border-blueprint-line space-x-3">
+        <div class="text-right">
+          <div class="text-xs font-bold text-slate-200" id="currentUserName">Betöltés...</div>
+          <div class="text-[11px] text-slate-400 font-mono" id="currentUserAccount"></div>
+        </div>
+        <button id="openChangePassBtn" title="Jelszó módosítása" class="p-2 rounded-lg bg-blueprint-800 hover:bg-blueprint-700 text-slate-300 hover:text-white border border-blueprint-line transition text-lg flex items-center justify-center">
+          <i class="ph ph-key"></i>
+        </button>
+        <button id="logoutBtn" title="Kijelentkezés" class="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition text-lg flex items-center justify-center">
+          <i class="ph ph-sign-out"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CONTROL & FILTER BAR ==================== -->
+  <div class="bg-blueprint-850/95 border-b border-blueprint-line px-5 py-2 flex flex-wrap items-center justify-between text-xs gap-3 z-20">
+    <div class="flex items-center space-x-1.5">
+      <span class="text-slate-400 font-semibold mr-1 flex items-center gap-1">
+        <i class="ph ph-funnel"></i> Szűrés:
+      </span>
+      <button data-filter="all" class="filter-btn px-3 py-1 rounded bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-medium transition">Összes ág</button>
+      <button data-filter="composite" class="filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition">🌿 Kompozit</button>
+      <button data-filter="metallic" class="filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition">⚙️ Fémes</button>
+      <button data-filter="polymer" class="filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition">🧬 Polimer</button>
+      <button data-filter="miscellaneous" class="filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition">📦 Egyéb</button>
+    </div>
+
+    <div id="readOnlyIndicator" class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded flex items-center gap-2">
+      <i class="ph ph-info font-bold"></i>
+      <span>Munkatársi profil: <strong>Csak olvasható</strong>. A készségeket a vezető/admin oldhatja fel.</span>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <span class="text-slate-400">Nézet:</span>
+      <button id="zoomOutBtn" class="w-7 h-7 flex items-center justify-center bg-blueprint-800 hover:bg-blueprint-700 rounded border border-blueprint-line text-slate-300" title="Kicsinyítés">
+        <i class="ph ph-minus"></i>
+      </button>
+      <span id="zoomLevelText" class="font-mono text-slate-300 w-12 text-center font-bold">85%</span>
+      <button id="zoomInBtn" class="w-7 h-7 flex items-center justify-center bg-blueprint-800 hover:bg-blueprint-700 rounded border border-blueprint-line text-slate-300" title="Nagyítás">
+        <i class="ph ph-plus"></i>
+      </button>
+      <button id="zoomResetBtn" class="px-2 h-7 flex items-center justify-center bg-blueprint-800 hover:bg-blueprint-700 rounded border border-blueprint-line text-slate-300 font-medium" title="Középre rendezés">
+        <i class="ph ph-arrows-out-cardinal mr-1"></i> Középre
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== VÁLTOZÁSI ÉRTESÍTŐ SÁV ==================== -->
+  <div id="changeNotificationBar" class="hidden bg-gradient-to-r from-emerald-950/90 via-slate-900 to-rose-950/90 border-b border-cyan-500/40 px-5 py-2 z-20 flex items-center justify-between shadow-lg">
+    <div class="flex items-center gap-2.5 text-xs">
+      <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+      <span class="font-bold text-white">Változások a legutóbbi belépésed óta:</span>
+      <span id="changeNotificationText" class="text-slate-200"></span>
+    </div>
+    <button id="dismissChangesBtn" class="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 rounded text-xs font-semibold flex items-center gap-1.5 transition">
+      <i class="ph-bold ph-check"></i> Megértettem / Nyugtázom
+    </button>
+  </div>
+
+  <!-- ==================== SKILL TREE VIEWPORT (PAN & ZOOM) ==================== -->
+  <main id="viewport" class="flex-1 relative overflow-hidden blueprint-grid cursor-grab active:cursor-grabbing">
+    <div id="treeContainer" class="absolute transform-gpu origin-top-left transition-transform duration-75" style="width: 5000px; height: 2000px; left: 0px; top: 0px;">
+      <svg id="connectionsLayer" class="absolute inset-0 w-full h-full pointer-events-none z-0" style="min-width: 5000px; min-height: 2000px; overflow: visible;">
+        <defs>
+          <filter id="glowUnlocked" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
+      <div id="nodesLayer" class="absolute inset-0 w-full h-full pointer-events-auto z-10"></div>
+    </div>
+  </main>
+
+  <!-- ==================== HOVER TOOLTIP ==================== -->
+  <div id="skillTooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 border border-cyan-500/60 backdrop-blur-md rounded-lg p-3 text-xs w-72 shadow-2xl transition-opacity duration-150">
+    <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-800">
+      <span id="tooltipCategory" class="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">Kategória</span>
+      <span id="tooltipStatus" class="font-bold px-1.5 py-0.5 rounded text-[10px]">Státusz</span>
+    </div>
+    <h3 id="tooltipTitle" class="text-sm font-bold text-white mb-1">Cím</h3>
+    <p id="tooltipDesc" class="text-slate-300 leading-relaxed mb-2">Leírás</p>
+    <div class="text-[11px] text-slate-400 border-t border-slate-800 pt-1.5 flex items-start justify-between gap-3">
+      <span class="shrink-0 text-slate-400">Előfeltétel:</span>
+      <span id="tooltipReq" class="font-medium text-slate-200 text-right leading-tight break-words flex-1">-</span>
+    </div>
+  </div>
+
+  <!-- ==================== SKILL MODAL ==================== -->
+  <div id="skillModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-blueprint-850 border border-blueprint-line w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 bg-blueprint-800 border-b border-blueprint-line flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div id="modalIconBox" class="w-10 h-10 rounded-lg flex items-center justify-center text-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+            <i id="modalIcon" class="ph ph-cube"></i>
+          </div>
+          <div>
+            <span id="modalCategory" class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-bold">Kategória</span>
+            <h2 id="modalTitle" class="text-lg font-bold text-white">Készség neve</h2>
+          </div>
+        </div>
+        <button id="modalCloseBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-blueprint-700">
+          <i class="ph ph-x text-xl"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Követelmény és Kompetencia</h4>
+          <p id="modalDescription" class="text-slate-200 text-sm leading-relaxed bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line">
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line">
+            <div class="text-slate-400 mb-0.5">Közvetlen előfeltétel:</div>
+            <div id="modalPrereq" class="font-semibold text-slate-200">Structural (Gyökér)</div>
+          </div>
+          <div class="bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line">
+            <div class="text-slate-400 mb-0.5">Aktuális státusz:</div>
+            <div id="modalStatusBadge" class="font-bold">Feloldva</div>
+          </div>
+        </div>
+
+        <div id="modalActionArea" class="pt-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JELSZÓVÁLTOZTATÁS MODAL ==================== -->
+  <div id="changePassModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-blueprint-850 border border-blueprint-line w-full max-w-sm rounded-xl overflow-hidden shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-blueprint-line">
+        <div class="flex items-center gap-2 text-white font-bold text-base">
+          <i class="ph ph-key text-cyan-400 text-lg"></i>
+          <span>Jelszó módosítása</span>
+        </div>
+        <button id="changePassCloseBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-blueprint-700">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div id="changePassAlert" class="hidden mb-3 p-2.5 rounded-lg text-xs font-semibold"></div>
+
+      <form id="changePassForm" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Új jelszó</label>
+          <input type="password" id="newPassInput" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="Legalább 6 karakter">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Új jelszó megerősítése</label>
+          <input type="password" id="confirmPassInput" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="••••••••">
+        </div>
+
+        <button type="submit" class="w-full py-2.5 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-4 text-xs">
+          <i class="ph-bold ph-floppy-disk"></i> Új jelszó mentése
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== AUTH MODAL ==================== -->
+  <div id="authModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-blueprint-850 border border-blueprint-line w-full max-w-md rounded-2xl shadow-2xl overflow-hidden p-6 md:p-8">
+      <div class="text-center mb-6">
+        <div class="inline-flex w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-400/40 items-center justify-center text-cyan-400 text-3xl mb-3 shadow-lg">
+          <i class="ph-bold ph-tree-structure"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Structural előrehaladás</h2>
+        <p class="text-xs text-slate-400 mt-1">Tervezési és Gyártástechnológiai Kompetenciafa</p>
+      </div>
+
+      <div id="authAlert" class="hidden mb-4 p-3 rounded-lg text-xs font-semibold"></div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Felhasználónév</label>
+          <div class="relative">
+            <i class="ph ph-user absolute left-3 top-3 text-slate-400 text-base"></i>
+            <input type="text" id="loginUsername" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="felhasználónév">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Jelszó</label>
+          <div class="relative">
+            <i class="ph ph-lock absolute left-3 top-3 text-slate-400 text-base"></i>
+            <input type="password" id="loginPassword" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="••••••••">
+          </div>
+        </div>
+
+        <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-2">
+          <i class="ph-bold ph-sign-in"></i> Belépés
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN ÚJ PROFIL MODAL ==================== -->
+  <div id="adminUserModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-blueprint-850 border border-blueprint-line w-full max-w-sm rounded-xl overflow-hidden shadow-2xl p-6">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-blueprint-line">
+        <div class="flex items-center gap-2 text-white font-bold text-base">
+          <i class="ph-bold ph-user-plus text-emerald-400 text-lg"></i>
+          <span>Új munkatárs hozzáadása</span>
+        </div>
+        <button id="adminUserModalCloseBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-blueprint-700">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div id="adminUserAlert" class="hidden mb-3 p-2.5 rounded-lg text-xs font-semibold"></div>
+
+      <form id="adminUserForm" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Teljes név</label>
+          <input type="text" id="adminNewFullName" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="pl. Minta János">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Felhasználónév</label>
+          <input type="text" id="adminNewUsername" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="pl. minta.janos">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Kezdeti jelszó</label>
+          <input type="password" id="adminNewPassword" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="Legalább 6 karakter">
+        </div>
+
+        <button type="submit" id="adminNewUserSubmitBtn" class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-4 text-xs">
+          <i class="ph-bold ph-check"></i> Profil létrehozása
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIKA (SUPABASE CLOUD INTEGRÁCIÓ) ==================== -->
+  <script>
+    /* ==========================================================================
+       SUPABASE KLIENS INICIALIZÁLÁSA
+       ========================================================================== */
+    const SUPABASE_URL = "https://ngqqaaxerrcxuiqmykol.supabase.co";
+    // IDE MÁSOLD BE A KÉPERNYŐRŐL AZ ANON KULCSOT A COPY GOMBBAL:
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncXFhYXhlcnJjeHVpcW15a29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MDA5MDQsImV4cCI6MjEwNjA3NjkwNH0.bUimk8oN2ezMMFuMWK8R0nvPbxxe6GcLR_fFTL0VLH0";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const SKILLS_DATA = [
+      { id: "root", title: "Structural", category: "root", categoryName: "Központi Gyökér", parentId: null, icon: "ph-bold ph-shield-chevron", desc: "Szerkezeti, mechanikai és gyártási kompetenciafa központi kiindulópontja.", x: 2300, y: 80 },
+      { id: "comp_theory", title: "Kompozit elméleti alapok", category: "composite", categoryName: "Kompozit Elmélet", parentId: "root", icon: "ph ph-stack-simple", desc: "Szál- és gyantarandzserek, anizotrópia, rétegrend alapismeretek.", x: 650, y: 260 },
+      { id: "metal_theory", title: "Fémes elméleti alapok", category: "metallic", categoryName: "Fémes Elmélet", parentId: "root", icon: "ph ph-atom", desc: "Kristályszerkezetek, fázisdiagramok, ötvözők, hőkezelések és szilárdságtan alapok.", x: 1800, y: 260 },
+      { id: "poly_theory", title: "Polimer elméleti alapok", category: "polymer", categoryName: "Polimer Elmélet", parentId: "root", icon: "ph ph-dna", desc: "Hőre lágyuló és hőre keményedő polimerek, reológia és degradáció alapok.", x: 3050, y: 260 },
+      { id: "miscellaneous", title: "Egyéb készségek", category: "miscellaneous", categoryName: "Nem anyagfüggő készségek", parentId: "root", icon: "ph ph-briefcase", desc: "Minden mérnöki készség, ami nem anyagfüggő.", x: 4000, y: 260 },
+
+      { id: "comp_des_basic", title: "Kompozit tervezési alapok", category: "composite", categoryName: "Kompozit Tervezés", parentId: "comp_theory", icon: "ph ph-ruler", desc: "Klasszikus rétegelmélet (CLT), terhelési irányok és szálirányok.", x: 420, y: 470 },
+      { id: "comp_des_adv", title: "Kompozit tervezés haladó", category: "composite", categoryName: "Kompozit Tervezés", parentId: "comp_des_basic", icon: "ph ph-rows", desc: "Szendvicsszerkezetek tervezése, maganyagok, tönkremeneteli kritériumok.", x: 420, y: 680 },
+      { id: "comp_des_master", title: "Kompozit tervezés mester", category: "composite", categoryName: "Kompozit Tervezés", parentId: "comp_des_adv", icon: "ph ph-chart-polar", desc: "Nemlineáris FEA szimulációk, rétegelválási analízis és fáradás.", x: 420, y: 890 },
+
+      { id: "comp_mfg_basic", title: "Kompozit gyártás alapok", category: "composite", categoryName: "Kompozit Gyártás", parentId: "comp_theory", icon: "ph ph-hand", desc: "Kézi laminálás, prepreg technológia.", x: 880, y: 470 },
+      { id: "comp_mfg_adv", title: "Kompozit gyártás haladó", category: "composite", categoryName: "Kompozit Gyártás", parentId: "comp_mfg_basic", icon: "ph ph-cylinder", desc: "Szerszámtervezés alapok kompozit laminálásra, formaleválasztózás, vákuumzsákolás, utómunkálatok.", x: 880, y: 680 },
+      { id: "comp_mfg_master1", title: "Kompozit gyártás mester I", category: "composite", categoryName: "Kompozit Gyártás", parentId: "comp_mfg_adv", icon: "ph ph-scales", desc: "Körfűrészezés, anyagbemérés, szakítóvizsgálat, hajlítás vizsgálat, minőségvizsgálat.", x: 730, y: 890 },
+      { id: "comp_mfg_master2", title: "Kompozit gyártás mester II", category: "composite", categoryName: "Kompozit Gyártás", parentId: "comp_mfg_adv", icon: "ph ph-wind", desc: "Vákuuminfúziós technikák és egyéb gyártástechnológiák.", x: 1030, y: 890 },
+
+      { id: "metal_des_basic", title: "Fémes tervezési alapok", category: "metallic", categoryName: "Fémes Tervezés", parentId: "metal_theory", icon: "ph ph-compass-tool", desc: "Szilárdságtani alapszámítások, statikus igénybevételek és tűrések.", x: 1300, y: 470 },
+      { id: "metal_des_adv1", title: "Fémes tervezés haladó I", category: "metallic", categoryName: "Fémes Tervezés", parentId: "metal_des_basic", icon: "ph ph-polygon", desc: "Alkatrészek FEM szerkezeti szimulációja, peremfeltételek beállítása, eredmények kiértékelése.", x: 1300, y: 680 },
+      { id: "metal_des_adv2", title: "Fémes tervezés haladó II", category: "metallic", categoryName: "Fémes Tervezés", parentId: "metal_des_basic", icon: "ph ph-wave-sine", desc: "Fáradás, dinamikus méretezés (Wöhler) és hegesztési varratok vizsgálata.", x: 1500, y: 580 },
+      { id: "metal_des_master", title: "Fémes tervezés mester", category: "metallic", categoryName: "Fémes Tervezés", parentId: "metal_des_adv1", icon: "ph ph-crane", desc: "Komplex szerkezeti FEM szimulációk, nemlineáris hatások és törésmechanika.", x: 1300, y: 890 },
+
+      { id: "metal_mfg_basic", title: "Fémes gyártás alapok", category: "metallic", categoryName: "Fémes Gyártás", parentId: "metal_theory", icon: "ph ph-wrench", desc: "Alapvető gyártástechnológiák, forgácsolási paraméterek (v, f, a), vágóerők, szerszámgeometria és méréstechnika.", x: 2050, y: 470 },
+      { id: "lathe_trad_basic", title: "Hagyományos esztergálás alapok", category: "metallic", categoryName: "Hagyományos Esztergálás", parentId: "metal_mfg_basic", icon: "ph ph-circle-notch", desc: "Egyetemes esztergapad beállítása, tokmányozás, palást- és homlokesztergálás.", x: 1600, y: 680 },
+      { id: "lathe_trad_adv", title: "Hagyományos esztergálás haladó", category: "metallic", categoryName: "Hagyományos Esztergálás", parentId: "lathe_trad_basic", icon: "ph ph-arrows-clockwise", desc: "Késes menetvágás, kúpesztergálás és belső üregek kiesztergálása.", x: 1600, y: 890 },
+      { id: "lathe_trad_master", title: "Hagyományos esztergálás mester", category: "metallic", categoryName: "Hagyományos Esztergálás", parentId: "lathe_trad_adv", icon: "ph ph-crosshair", desc: "Egyedi készülékezés, excenteres és pontos illesztések készítése.", x: 1600, y: 1100 },
+
+      { id: "mill_trad_basic", title: "Hagyományos marás alapok", category: "metallic", categoryName: "Hagyományos Marás", parentId: "metal_mfg_basic", icon: "ph ph-gear-six", desc: "Konzolos marógép kezelése, sík- és derékszögmarás, satu beállítás.", x: 1900, y: 680 },
+      { id: "mill_trad_adv", title: "Hagyományos marás haladó", category: "metallic", categoryName: "Hagyományos Marás", parentId: "mill_trad_basic", icon: "ph ph-compass", desc: "Osztófej, körasztal használata, horonymarás és ferde felületek munkálása.", x: 1900, y: 890 },
+      { id: "mill_trad_master", title: "Hagyományos marás mester", category: "metallic", categoryName: "Hagyományos Marás", parentId: "mill_trad_adv", icon: "ph ph-diamonds-four", desc: "Egyedi készülék tervezése, összetett alakos felületek megmunkálása", x: 1900, y: 1100 },
+
+      { id: "lathe_cnc_basic", title: "CNC esztergálás alapok", category: "metallic", categoryName: "CNC Esztergálás", parentId: "metal_mfg_basic", icon: "ph ph-code", desc: "ISO G-kód alapok, szerszámbemérés (geometria/kopás), koordináta-rendszerek.", x: 2200, y: 680 },
+      { id: "lathe_cnc_adv", title: "CNC esztergálás haladó", category: "metallic", categoryName: "CNC Esztergálás", parentId: "lathe_cnc_basic", icon: "ph ph-cpu", desc: "Ciklusos programozás, CAM szoftveres programozás, magabiztos gépkezelés és forgácsolási paraméterek.", x: 2200, y: 890 },
+      { id: "lathe_cnc_master", title: "CNC esztergálás mester", category: "metallic", categoryName: "CNC Esztergálás", parentId: "lathe_cnc_adv", icon: "ph ph-faders", desc: "Hajtott szerszámok kezelése, egyedi készülék/befogások tervezése", x: 2200, y: 1100 },
+
+      { id: "mill_cnc_basic", title: "CNC marás alapok", category: "metallic", categoryName: "CNC Marás", parentId: "metal_mfg_basic", icon: "ph ph-terminal-window", desc: "Alapszintű 2-tengelyes programozás alapszintű CAM ismeretek segítségével, munkadarab nullpontfelvétel", x: 2500, y: 680 },
+      { id: "mill_cnc_adv", title: "CNC marás haladó", category: "metallic", categoryName: "CNC Marás", parentId: "mill_cnc_basic", icon: "ph ph-arrows-out-cardinal", desc: "3-tengelyes programozás, munkadarab nullpontfelvétel, alap interpolációk.", x: 2500, y: 890 },
+      { id: "mill_cnc_master", title: "CNC marás mester", category: "metallic", categoryName: "CNC Marás", parentId: "mill_cnc_adv", icon: "ph-bold ph-aperture", desc: "3+2 tengelyes pozicionált marás, adaptív zsebmarási stratégiák és CAM posztolás, szimultán 5-tengelyes simítás, nagy sebességű forgácsolás (HSM).", x: 2500, y: 1100 },
+
+      { id: "fdm_basic", title: "FDM 3D nyomtatás alapok", category: "polymer", categoryName: "FDM Nyomtatás", parentId: "poly_theory", icon: "ph ph-printer", desc: "FDM rétegépítés elve, PLA/PETG paraméterek, alap szeletelés és szintezés.", x: 2850, y: 470 },
+      { id: "fdm_adv", title: "FDM 3D nyomtatás haladó", category: "polymer", categoryName: "FDM Nyomtatás", parentId: "fdm_basic", icon: "ph ph-bounding-box", desc: "DFMA elvek, gyártási határok ismerete", x: 2850, y: 680 },
+      { id: "fdm_master", title: "FDM 3D nyomtatás mester", category: "polymer", categoryName: "FDM Nyomtatás", parentId: "fdm_adv", icon: "ph ph-thermometer-hot", desc: "Műszaki polimerek (ABS, Nylon, PC), fűtött kamra és támaszanyag optimalizáció.", x: 2850, y: 890 },
+
+      { id: "sls_basic", title: "SLS alapok", category: "polymer", categoryName: "SLS Nyomtatás", parentId: "poly_theory", icon: "ph ph-dots-nine", desc: "Szelektív lézerszinterezés elve, PA12 por tulajdonságai és kamrafűtés.", x: 3110, y: 470 },
+      { id: "sls_adv", title: "SLS haladó", category: "polymer", categoryName: "SLS Nyomtatás", parentId: "sls_basic", icon: "ph ph-shapes", desc: "3D alkatrész fészkelés (nesting), por-újrahasznosítási arányok és termikus stabilizálás.", x: 3110, y: 680 },
+      { id: "sla_basic", title: "SLA alapok", category: "polymer", categoryName: "SLA Nyomtatás", parentId: "poly_theory", icon: "ph ph-drop", desc: "Fotopolimerizációs elv UV fénnyel, folyékony gyanták kezelése, mosás és utókezelés.", x: 3370, y: 470 },
+      { id: "sla_adv", title: "SLA haladó", category: "polymer", categoryName: "SLA Nyomtatás", parentId: "sla_basic", icon: "ph ph-sun", desc: "Mikrotámaszok tervezése, orientálás, réteglehúzási erők kompenzálása és UV keményítési profilok.", x: 3370, y: 680 },
+      { id: "sla_master", title: "SLA mester", category: "polymer", categoryName: "SLA Nyomtatás", parentId: "sla_adv", icon: "ph ph-sketch-logo", desc: "Kerámiatöltésű és biokompatibilis mérnöki rezinek feldolgozása, optikai felületminőség.", x: 3370, y: 890 },
+
+      { id: "misc_eng_basic", title: "Angol nyelvtudás közép szinten", category: "miscellaneous", categoryName: "Angol", parentId: "miscellaneous", icon: "ph ph-translate", desc: "Az angol nyelv elfogadható, legalább B2 szintű használata.", x: 3700, y: 470 },
+      { id: "misc_eng_adv", title: "Angol nyelvtudás emelt szinten", category: "miscellaneous", categoryName: "Angol", parentId: "misc_eng_basic", icon: "ph ph-chat-centered-text", desc: "Az angol nyelv magabiztos, legalább C1 szintű használata.", x: 3700, y: 680 },
+      { id: "misc_cad_basic", title: "CAD tervezési alapok", category: "miscellaneous", categoryName: "CAD használat", parentId: "miscellaneous", icon: "ph ph-pencil-line", desc: "Egyszerűbb alkatrészek és összeállítások tervezése.", x: 4000, y: 470 },
+      { id: "misc_cad_adv", title: "CAD tervezés haladó", category: "miscellaneous", categoryName: "CAD használat", parentId: "misc_cad_basic", icon: "ph ph-cube-transparent", desc: "Bonyolultabb alkatrészek tervezése, a TOP-DOWN és a BOTTOM-UP tervezés ismerete, paraméteres tervezés.", x: 4000, y: 680 },
+      { id: "misc_rendering_basic", title: "Alkatrészek és összeállítások renderelési alapjai", category: "miscellaneous", categoryName: "Renderelés alapok", parentId: "miscellaneous", icon: "ph ph-paint-brush-broad", desc: "Alapszintű, CAD szoftverbeli renderelési készség.", x: 4300, y: 470 },
+      { id: "misc_rendering_adv", title: "Alkatrészek és összeállítások renderelése haladó szinten", category: "miscellaneous", categoryName: "Renderelés haladó", parentId: "misc_rendering_basic", icon: "ph ph-projector-screen", desc: "Blender-beli valósághű textúrázás, fénybeállítások és professzionális termékvizualizáció", x: 4300, y: 680 }
+    ];
+
+    /* ==========================================================================
+       ÁLLAPOT & VÁLTOZÓK
+       ========================================================================== */
+    let currentUserProfile = null;
+    let allProfiles = [];
+    let activeViewingUserId = null;
+    let activeFilter = "all";
+    let selectedSkill = null;
+
+    let newlyUnlockedSkills = new Set();
+    let newlyRevokedSkills = new Set();
+
+    let scale = 0.55;
+    let panX = 0, panY = 0;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      setupPanAndZoom();
+      setupFilters();
+      setupModalEvents();
+      setupAuth();
+      setupChangePasswordModal();
+      setupAdminUserManagement();
+      await checkAuthSession();
+    });
+
+    /* ==========================================================================
+       SESSION & ADATBÁZIS LEKÉRDEZÉSEK
+       ========================================================================== */
+    async function checkAuthSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await loadUserData(session.user.id);
+        hideAuthModal();
+      } else {
+        showAuthModal();
+      }
+    }
+
+    async function loadUserData(authUserId) {
+      // 1. Saját profil betöltése
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUserId)
+        .single();
+
+      if (error || !profile) {
+        await supabase.auth.signOut();
+        showAuthModal();
+        return;
+      }
+
+      currentUserProfile = profile;
+
+      // 2. Összes profil lekérése (hogy az admin választhasson munkatársat)
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name');
+
+      allProfiles = profiles || [currentUserProfile];
+
+      if (currentUserProfile.role === 'admin') {
+        const firstNormal = allProfiles.find(p => p.role !== 'admin') || currentUserProfile;
+        activeViewingUserId = firstNormal.id;
+      } else {
+        activeViewingUserId = currentUserProfile.id;
+      }
+
+      updateUIForUser();
+      detectProfileChanges();
+      renderTree();
+      centerRootNode();
+
+      // Realtime feliratkozás: ha valami változik a felhőben, azonnal frissül
+      supabase
+        .channel('public:profiles')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
+          const { data: updatedProfiles } = await supabase.from('profiles').select('*').order('full_name');
+          allProfiles = updatedProfiles || [];
+          currentUserProfile = allProfiles.find(p => p.id === currentUserProfile.id) || currentUserProfile;
+          updateUIForUser();
+          renderTree();
+          updateProgressStats();
+        })
+        .subscribe();
+    }
+
+    function showAuthModal() {
+      document.getElementById("authModal").classList.remove("hidden");
+    }
+
+    function hideAuthModal() {
+      document.getElementById("authModal").classList.add("hidden");
+    }
+
+    function getActiveProfile() {
+      return allProfiles.find(p => p.id === activeViewingUserId) || currentUserProfile;
+    }
+
+    function updateUIForUser() {
+      document.getElementById("currentUserName").textContent = currentUserProfile.full_name;
+      document.getElementById("currentUserAccount").textContent = `@${currentUserProfile.username}`;
+
+      const roleBadge = document.getElementById("roleBadge");
+      const adminSelector = document.getElementById("adminUserSelectorContainer");
+      const readOnlyIndicator = document.getElementById("readOnlyIndicator");
+
+      if (currentUserProfile.role === "admin") {
+        roleBadge.textContent = "ADMIN";
+        roleBadge.className = "text-[11px] px-2 py-0.5 rounded font-mono border border-amber-400 bg-amber-500/20 text-amber-300 font-bold";
+        adminSelector.classList.remove("hidden");
+        adminSelector.classList.add("flex");
+        readOnlyIndicator.classList.add("hidden");
+        populateEngineerDropdown();
+      } else {
+        roleBadge.textContent = "MUNKATÁRS";
+        roleBadge.className = "text-[11px] px-2 py-0.5 rounded font-mono border border-cyan-400/50 bg-cyan-500/10 text-cyan-300 font-bold";
+        adminSelector.classList.remove("flex");
+        adminSelector.classList.add("hidden");
+        readOnlyIndicator.classList.remove("hidden");
+      }
+
+      updateProgressStats();
+    }
+
+    function populateEngineerDropdown() {
+      const select = document.getElementById("engineerSelect");
+      select.innerHTML = "";
+
+      allProfiles.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        option.textContent = `${p.full_name}${p.role === 'admin' ? ' [ADMIN]' : ''}`;
+        if (p.id === activeViewingUserId) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+
+      select.onchange = (e) => {
+        activeViewingUserId = e.target.value;
+        renderTree();
+        updateProgressStats();
+      };
+    }
+
+    function updateProgressStats() {
+      const profile = getActiveProfile();
+      const total = SKILLS_DATA.length;
+      const unlockedCount = (profile.unlocked_skills || []).length;
+      const percent = Math.round((unlockedCount / total) * 100);
+
+      document.getElementById("statsProgress").textContent = `${unlockedCount} / ${total} (${percent}%)`;
+      document.getElementById("statsProgressBar").style.width = `${percent}%`;
+    }
+
+    /* ==========================================================================
+       VÁLTOZÁSOK DETEKTÁLÁSA
+       ========================================================================== */
+    function detectProfileChanges() {
+      newlyUnlockedSkills.clear();
+      newlyRevokedSkills.clear();
+
+      if (currentUserProfile.role === "admin") {
+        document.getElementById("changeNotificationBar").classList.add("hidden");
+        return;
+      }
+
+      const currentSkills = new Set(currentUserProfile.unlocked_skills || ["root"]);
+      const lastSeenList = currentUserProfile.last_seen_skills || ["root"];
+      const lastSeen = new Set(lastSeenList);
+
+      currentSkills.forEach(id => {
+        if (!lastSeen.has(id)) newlyUnlockedSkills.add(id);
+      });
+
+      lastSeen.forEach(id => {
+        if (!currentSkills.has(id)) newlyRevokedSkills.add(id);
+      });
+
+      const notifBar = document.getElementById("changeNotificationBar");
+      const notifText = document.getElementById("changeNotificationText");
+
+      if (newlyUnlockedSkills.size > 0 || newlyRevokedSkills.size > 0) {
+        let messages = [];
+        if (newlyUnlockedSkills.size > 0) {
+          messages.push(`<strong class="text-emerald-400">${newlyUnlockedSkills.size} új készség feloldva</strong>`);
+        }
+        if (newlyRevokedSkills.size > 0) {
+          messages.push(`<strong class="text-rose-400">${newlyRevokedSkills.size} készség visszavonva</strong>`);
+        }
+        notifText.innerHTML = messages.join(", ") + " (lásd a villogó elemeket a fán).";
+        notifBar.classList.remove("hidden");
+      } else {
+        notifBar.classList.add("hidden");
+      }
+
+      document.getElementById("dismissChangesBtn").onclick = async () => {
+        const updatedList = Array.from(currentSkills);
+        await supabase
+          .from('profiles')
+          .update({ last_seen_skills: updatedList })
+          .eq('id', currentUserProfile.id);
+
+        currentUserProfile.last_seen_skills = updatedList;
+        newlyUnlockedSkills.clear();
+        newlyRevokedSkills.clear();
+        notifBar.classList.add("hidden");
+        renderTree();
+      };
+    }
+
+    /* ==========================================================================
+       KOMPONENSEK & KAPCSOLÓVONALAK RENDERE
+       ========================================================================== */
+    function renderTree() {
+      const nodesLayer = document.getElementById("nodesLayer");
+      const connectionsLayer = document.getElementById("connectionsLayer");
+      nodesLayer.innerHTML = "";
+      
+      const defs = connectionsLayer.querySelector("defs").outerHTML;
+      connectionsLayer.innerHTML = defs;
+
+      const profile = getActiveProfile();
+      const unlockedSet = new Set(profile.unlocked_skills || ["root"]);
+      const isAdmin = (currentUserProfile.role === "admin");
+
+      SKILLS_DATA.forEach(skill => {
+        const isVisible = (activeFilter === "all" || skill.category === "root" || skill.category === activeFilter);
+        const isUnlocked = unlockedSet.has(skill.id);
+        const parentUnlocked = !skill.parentId || unlockedSet.has(skill.parentId);
+        const canBeUnlocked = !isUnlocked && parentUnlocked;
+
+        const nodeEl = document.createElement("div");
+        nodeEl.className = `absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 cursor-pointer ${isVisible ? 'opacity-100' : 'opacity-20 pointer-events-none'}`;
+        nodeEl.style.left = `${skill.x}px`;
+        nodeEl.style.top = `${skill.y}px`;
+
+        if (skill.id === "root") {
+          nodeEl.innerHTML = `
+            <div class="flex flex-col items-center group">
+              <div class="w-16 h-16 rounded-2xl bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center text-cyan-300 text-3xl shadow-[0_0_25px_rgba(56,189,248,0.5)] group-hover:scale-105 transition-transform">
+                <i class="${skill.icon}"></i>
+              </div>
+              <div class="mt-2 text-center bg-blueprint-850 border border-cyan-500/50 px-3 py-1 rounded-lg">
+                <div class="text-xs font-bold text-white uppercase tracking-wider">${skill.title}</div>
+                <div class="text-[10px] text-cyan-400 font-mono">FŐ GYÖKÉR ELEM</div>
+              </div>
+            </div>
+          `;
+        } else {
+          let cardStyle = "";
+          let iconColor = "";
+          let badge = "";
+
+          const isNewlyUnlocked = newlyUnlockedSkills.has(skill.id);
+          const isNewlyRevoked = newlyRevokedSkills.has(skill.id);
+
+          if (isUnlocked) {
+            if (isNewlyUnlocked) {
+              cardStyle = "bg-emerald-950/80 border-emerald-400 newly-unlocked-pulse shadow-[0_0_25px_rgba(16,185,129,0.5)]";
+              iconColor = "text-emerald-300";
+              badge = `<span class="bg-emerald-400 text-slate-950 text-[10px] px-1.5 py-0.5 rounded font-black tracking-wider animate-pulse flex items-center gap-1">★ ÚJ FELOLDÁS</span>`;
+            } else {
+              cardStyle = "bg-slate-900/95 border-emerald-500/80 shadow-[0_0_18px_rgba(16,185,129,0.35)]";
+              iconColor = "text-emerald-400";
+              badge = `<span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1 font-semibold"><i class="ph-bold ph-check"></i> Kész</span>`;
+            }
+          } else if (isNewlyRevoked) {
+            cardStyle = "bg-rose-950/80 border-rose-500 newly-revoked-pulse shadow-[0_0_25px_rgba(244,63,94,0.5)]";
+            iconColor = "text-rose-400";
+            badge = `<span class="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold flex items-center gap-1 animate-pulse"><i class="ph-bold ph-warning"></i> VISSZAVONVA</span>`;
+          } else if (canBeUnlocked) {
+            cardStyle = isAdmin 
+              ? "bg-slate-900/95 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.4)] ready-to-unlock" 
+              : "bg-slate-900/90 border-slate-600";
+            iconColor = isAdmin ? "text-amber-400" : "text-slate-400";
+            badge = isAdmin
+              ? `<span class="bg-amber-500/20 text-amber-300 text-[10px] px-1.5 py-0.5 rounded border border-amber-500/40 font-semibold">Feloldható</span>`
+              : `<span class="bg-slate-800 text-slate-400 text-[10px] px-1.5 py-0.5 rounded border border-slate-700">Következő</span>`;
+          } else {
+            cardStyle = "bg-slate-950/80 border-slate-800 opacity-60";
+            iconColor = "text-slate-600";
+            badge = `<span class="bg-slate-800/70 text-slate-500 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph ph-lock"></i> Zárolt</span>`;
+          }
+
+          nodeEl.innerHTML = `
+            <div class="w-64 p-3 rounded-xl border ${cardStyle} backdrop-blur-md hover:scale-102 hover:border-cyan-400 transition-all duration-150">
+              <div class="flex items-start gap-2.5">
+                <div class="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-lg ${iconColor} border border-slate-700 shrink-0">
+                  <i class="${skill.icon}"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-1 mb-1">
+                    <span class="text-[9px] font-mono uppercase text-slate-400 truncate">${skill.categoryName}</span>
+                    ${badge}
+                  </div>
+                  <h4 class="text-xs font-bold text-slate-100 truncate">${skill.title}</h4>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        nodeEl.addEventListener("mouseenter", (e) => showTooltip(e, skill, isUnlocked, canBeUnlocked));
+        nodeEl.addEventListener("mousemove", (e) => moveTooltip(e));
+        nodeEl.addEventListener("mouseleave", hideTooltip);
+        nodeEl.addEventListener("click", () => openSkillModal(skill));
+
+        nodesLayer.appendChild(nodeEl);
+      });
+
+      drawConnections(unlockedSet);
+    }
+
+    function drawConnections(unlockedSet) {
+      const connectionsLayer = document.getElementById("connectionsLayer");
+
+      SKILLS_DATA.forEach(skill => {
+        if (!skill.parentId) return;
+        const parent = SKILLS_DATA.find(s => s.id === skill.parentId);
+        if (!parent) return;
+
+        const isChildUnlocked = unlockedSet.has(skill.id);
+        const isParentUnlocked = unlockedSet.has(parent.id);
+        const isBranchFocused = (activeFilter === "all" || skill.category === activeFilter);
+
+        const x1 = parent.x;
+        const y1 = parent.id === "root" ? (parent.y + 40) : (parent.y + 30);
+        const x2 = skill.x;
+        const y2 = skill.y - 30;
+
+        let pathData = "";
+        const isVertical = Math.abs(x1 - x2) < 5;
+
+        if (isVertical) {
+          pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
+        } else {
+          const deltaY = (y2 - y1);
+          pathData = `M ${x1} ${y1} C ${x1} ${y1 + deltaY * 0.45}, ${x2} ${y2 - deltaY * 0.45}, ${x2} ${y2}`;
+        }
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", pathData);
+        path.setAttribute("fill", "none");
+
+        if (isChildUnlocked && isParentUnlocked) {
+          if (isBranchFocused) {
+            path.setAttribute("stroke", "#10b981");
+            path.setAttribute("stroke-width", "3.5");
+            path.setAttribute("stroke-linecap", "round");
+            path.setAttribute("opacity", "1");
+          } else {
+            path.setAttribute("stroke", "#065f46");
+            path.setAttribute("stroke-width", "1.5");
+            path.setAttribute("opacity", "0.35");
+          }
+        } else if (isParentUnlocked) {
+          path.setAttribute("stroke", isBranchFocused ? "#38bdf8" : "#1e3a5f");
+          path.setAttribute("stroke-width", isBranchFocused ? "2.5" : "1.2");
+          path.setAttribute("stroke-dasharray", "6,5");
+          path.setAttribute("opacity", isBranchFocused ? "1" : "0.25");
+        } else {
+          path.setAttribute("stroke", isBranchFocused ? "#476999" : "#1e293b");
+          path.setAttribute("stroke-width", isBranchFocused ? "2" : "1");
+          path.setAttribute("stroke-dasharray", "4,4");
+          path.setAttribute("opacity", isBranchFocused ? "0.8" : "0.2");
+        }
+
+        connectionsLayer.appendChild(path);
+      });
+    }
+
+    /* ==========================================================================
+       TOOLTIP
+       ========================================================================== */
+    const tooltip = document.getElementById("skillTooltip");
+
+    function showTooltip(e, skill, isUnlocked, canBeUnlocked) {
+      document.getElementById("tooltipCategory").textContent = skill.categoryName;
+      document.getElementById("tooltipTitle").textContent = skill.title;
+      document.getElementById("tooltipDesc").textContent = skill.desc;
+
+      const statusEl = document.getElementById("tooltipStatus");
+      if (isUnlocked) {
+        statusEl.textContent = "FELOLDVA";
+        statusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+      } else if (canBeUnlocked) {
+        statusEl.textContent = "KÖVETKEZŐ LÉPÉS";
+        statusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30";
+      } else {
+        statusEl.textContent = "ZÁROLT";
+        statusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700";
+      }
+
+      const parent = SKILLS_DATA.find(s => s.id === skill.parentId);
+      document.getElementById("tooltipReq").textContent = parent ? parent.title : "Nincs (Gyökér)";
+
+      tooltip.classList.remove("hidden");
+      moveTooltip(e);
+    }
+
+    function moveTooltip(e) {
+      const offset = 18;
+      let left = e.clientX + offset;
+      let top = e.clientY + offset;
+
+      if (left + 300 > window.innerWidth) left = e.clientX - 300;
+      if (top + 160 > window.innerHeight) top = e.clientY - 160;
+
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+    }
+
+    function hideTooltip() {
+      tooltip.classList.add("hidden");
+    }
+
+    /* ==========================================================================
+       MODAL & MŰVELETEK (SUPABASE ADATBÁZIS MENTÉSSEL)
+       ========================================================================== */
+    function openSkillModal(skill) {
+      selectedSkill = skill;
+      const profile = getActiveProfile();
+      const unlockedSet = new Set(profile.unlocked_skills || ["root"]);
+      const isUnlocked = unlockedSet.has(skill.id);
+      const parent = SKILLS_DATA.find(s => s.id === skill.parentId);
+      const parentUnlocked = !parent || unlockedSet.has(parent.id);
+
+      document.getElementById("modalCategory").textContent = skill.categoryName;
+      document.getElementById("modalTitle").textContent = skill.title;
+      document.getElementById("modalDescription").textContent = skill.desc;
+      document.getElementById("modalPrereq").textContent = parent ? parent.title : "Nincs (Központi gyökér)";
+
+      const modalIcon = document.getElementById("modalIcon");
+      modalIcon.className = `ph ${skill.icon}`;
+
+      const statusBadge = document.getElementById("modalStatusBadge");
+      if (isUnlocked) {
+        statusBadge.textContent = "✓ Teljesítve / Feloldva";
+        statusBadge.className = "text-emerald-400 font-bold";
+      } else if (parentUnlocked) {
+        statusBadge.textContent = "Feloldható";
+        statusBadge.className = "text-amber-400 font-bold";
+      } else {
+        statusBadge.textContent = "✕ Zárolva (Előfeltétel hiányzik)";
+        statusBadge.className = "text-rose-400 font-bold";
+      }
+
+      const actionArea = document.getElementById("modalActionArea");
+      actionArea.innerHTML = "";
+
+      if (currentUserProfile.role === "admin") {
+        if (skill.id === "root") {
+          actionArea.innerHTML = `
+            <div class="p-3 bg-blueprint-900 border border-blueprint-line rounded-lg text-xs text-slate-400 text-center">
+              A <strong>Structural</strong> gyökér kompetencia minden profilnál alaptartozék, nem zárolható.
+            </div>
+          `;
+        } else if (isUnlocked) {
+          actionArea.innerHTML = `
+            <div class="space-y-3">
+              <div class="text-xs text-slate-300">
+                Munkatárs: <span class="font-bold text-cyan-300">${profile.full_name}</span>. Ez a készség jelenleg aktív.
+              </div>
+              <button id="adminRevokeBtn" class="w-full py-2.5 px-4 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold rounded-lg transition flex items-center justify-center gap-2 text-sm">
+                <i class="ph-bold ph-lock-key"></i> Készség visszavonása (Zárolás)
+              </button>
+            </div>
+          `;
+          document.getElementById("adminRevokeBtn").onclick = () => revokeSkill(skill.id);
+        } else {
+          if (parentUnlocked) {
+            actionArea.innerHTML = `
+              <div class="space-y-3">
+                <div class="text-xs text-slate-300">
+                  Munkatárs: <span class="font-bold text-cyan-300">${profile.full_name}</span>. Az előfeltétel teljesült.
+                </div>
+                <button id="adminUnlockBtn" class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition flex items-center justify-center gap-2 text-sm shadow-lg">
+                  <i class="ph-bold ph-check-circle"></i> Készség feloldása (Unlock Skill)
+                </button>
+              </div>
+            `;
+            document.getElementById("adminUnlockBtn").onclick = () => unlockSkill(skill.id);
+          } else {
+            actionArea.innerHTML = `
+              <div class="p-3.5 bg-rose-950/40 border border-rose-500/50 rounded-lg text-xs space-y-2">
+                <div class="flex items-center gap-2 text-rose-400 font-bold">
+                  <i class="ph-bold ph-prohibit text-base"></i> Nem oldható fel!
+                </div>
+                <p class="text-slate-300 leading-relaxed">
+                  A készség feloldásához először a közvetlen előfeltételt (<span class="text-amber-400 font-semibold">${parent.title}</span>) kell feloldani ennél a munkatársnál.
+                </p>
+                <button disabled class="w-full py-2 px-4 bg-slate-800 text-slate-500 font-bold rounded-lg cursor-not-allowed border border-slate-700 flex items-center justify-center gap-2">
+                  <i class="ph ph-lock"></i> Előfeltétel hiányzik (Letiltva)
+                </button>
+              </div>
+            `;
+          }
+        }
+      } else {
+        actionArea.innerHTML = `
+          <div class="p-3.5 bg-blueprint-900 border border-blueprint-line rounded-lg text-xs space-y-1.5">
+            <div class="flex items-center gap-2 text-cyan-300 font-semibold">
+              <i class="ph ph-lock-simple text-base"></i> Munkatársi profil (Csak megtekintés)
+            </div>
+            <p class="text-slate-400 leading-relaxed">
+              Az előrehaladás feloldását a vezető mérnök hagyja jóvá a szakmai kompetenciák megszerzését követően.
+            </p>
+          </div>
+        `;
+      }
+
+      document.getElementById("skillModal").classList.remove("hidden");
+    }
+
+    function setupModalEvents() {
+      document.getElementById("modalCloseBtn").onclick = () => document.getElementById("skillModal").classList.add("hidden");
+      document.getElementById("skillModal").onclick = (e) => {
+        if (e.target.id === "skillModal") document.getElementById("skillModal").classList.add("hidden");
+      };
+    }
+
+    async function unlockSkill(skillId) {
+      const profile = getActiveProfile();
+      const currentList = profile.unlocked_skills || ["root"];
+      if (!currentList.includes(skillId)) {
+        const updated = [...currentList, skillId];
+        const { error } = await supabase
+          .from('profiles')
+          .update({ unlocked_skills: updated })
+          .eq('id', profile.id);
+
+        if (error) {
+          alert("Hiba a feloldás során: " + error.message);
+          return;
+        }
+        profile.unlocked_skills = updated;
+      }
+
+      document.getElementById("skillModal").classList.add("hidden");
+      renderTree();
+      updateProgressStats();
+    }
+
+    async function revokeSkill(skillId) {
+      if (!confirm("Biztosan zárolod újra ezt a készséget ennél a munkatársnál?")) return;
+
+      const profile = getActiveProfile();
+      let updated = (profile.unlocked_skills || []).filter(id => id !== skillId);
+
+      function revokeChildren(parentId) {
+        const children = SKILLS_DATA.filter(s => s.parentId === parentId);
+        children.forEach(child => {
+          if (updated.includes(child.id)) {
+            updated = updated.filter(id => id !== child.id);
+            revokeChildren(child.id);
+          }
+        });
+      }
+      revokeChildren(skillId);
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ unlocked_skills: updated })
+        .eq('id', profile.id);
+
+      if (error) {
+        alert("Hiba a mentés során: " + error.message);
+        return;
+      }
+
+      profile.unlocked_skills = updated;
+      document.getElementById("skillModal").classList.add("hidden");
+      renderTree();
+      updateProgressStats();
+    }
+
+    /* ==========================================================================
+       PAN & ZOOM
+       ========================================================================== */
+    function clampPan(x, y, currentScale) {
+      const viewport = document.getElementById("viewport");
+      const vWidth = viewport.clientWidth;
+      const vHeight = viewport.clientHeight;
+
+      const contentWidth = 5000 * currentScale;
+      const contentHeight = 2000 * currentScale;
+
+      const marginX = Math.min(300, vWidth * 0.4);
+      const marginY = Math.min(200, vHeight * 0.4);
+
+      const minX = vWidth - contentWidth - marginX;
+      const maxX = marginX;
+      const minY = vHeight - contentHeight - marginY;
+      const maxY = marginY;
+
+      return {
+        x: Math.min(Math.max(x, minX), maxX),
+        y: Math.min(Math.max(y, minY), maxY)
+      };
+    }
+
+    function setupPanAndZoom() {
+      const viewport = document.getElementById("viewport");
+      const container = document.getElementById("treeContainer");
+      container.style.transition = "none";
+
+      function updateTransform() {
+        const clamped = clampPan(panX, panY, scale);
+        panX = clamped.x;
+        panY = clamped.y;
+
+        container.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        document.getElementById("zoomLevelText").textContent = `${Math.round(scale * 100)}%`;
+      }
+
+      viewport.addEventListener("mousedown", (e) => {
+        if (
+          e.target.closest("button") || 
+          e.target.closest(".filter-btn") || 
+          e.target.closest("#adminUserSelectorContainer") ||
+          e.target.closest("#skillModal")
+        ) return;
+
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        updateTransform();
+      });
+
+      window.addEventListener("mouseup", () => isDragging = false);
+
+      viewport.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+        const newScale = Math.min(Math.max(0.35, scale * zoomFactor), 1.6);
+
+        if (newScale === scale) return;
+
+        panX = mouseX - (mouseX - panX) * (newScale / scale);
+        panY = mouseY - (mouseY - panY) * (newScale / scale);
+        scale = newScale;
+
+        updateTransform();
+      }, { passive: false });
+
+      function zoomAtCenter(factor) {
+        const rect = viewport.getBoundingClientRect();
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const newScale = Math.min(Math.max(0.35, scale * factor), 1.6);
+        if (newScale === scale) return;
+
+        panX = centerX - (centerX - panX) * (newScale / scale);
+        panY = centerY - (centerY - panY) * (newScale / scale);
+        scale = newScale;
+
+        updateTransform();
+      }
+
+      document.getElementById("zoomInBtn").onclick = () => zoomAtCenter(1.2);
+      document.getElementById("zoomOutBtn").onclick = () => zoomAtCenter(0.83);
+      document.getElementById("zoomResetBtn").onclick = () => centerRootNode();
+    }
+
+    function centerRootNode() {
+      const viewport = document.getElementById("viewport");
+      scale = 0.35;
+      panX = (viewport.clientWidth / 2) - (2300 * scale);
+      panY = 40;
+
+      const clamped = clampPan(panX, panY, scale);
+      panX = clamped.x;
+      panY = clamped.y;
+
+      const container = document.getElementById("treeContainer");
+      container.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      document.getElementById("zoomLevelText").textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    /* ==========================================================================
+       SZŰRŐK
+       ========================================================================== */
+    function setupFilters() {
+      const filterBtns = document.querySelectorAll(".filter-btn");
+      filterBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeFilter = btn.dataset.filter;
+          filterBtns.forEach(b => {
+            b.className = "filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition";
+          });
+          btn.className = "filter-btn px-3 py-1 rounded bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-medium transition";
+          renderTree();
+        });
+      });
+    }
+
+    /* ==========================================================================
+       ADMIN: ÚJ PROFIL ÉS TÖRLÉS (SUPABASE AUTH & TABLE)
+       ========================================================================== */
+    function setupAdminUserManagement() {
+      const modal = document.getElementById("adminUserModal");
+      const openBtn = document.getElementById("adminCreateUserBtn");
+      const closeBtn = document.getElementById("adminUserModalCloseBtn");
+      const form = document.getElementById("adminUserForm");
+      const alertBox = document.getElementById("adminUserAlert");
+      const deleteBtn = document.getElementById("adminDeleteUserBtn");
+      const submitBtn = document.getElementById("adminNewUserSubmitBtn");
+
+      openBtn.onclick = () => {
+        form.reset();
+        alertBox.classList.add("hidden");
+        modal.classList.remove("hidden");
+      };
+
+      closeBtn.onclick = () => modal.classList.add("hidden");
+      modal.onclick = (e) => {
+        if (e.target.id === "adminUserModal") modal.classList.add("hidden");
+      };
+
+      // Új profil regisztrálása Supabase Auth-ba
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const fullName = document.getElementById("adminNewFullName").value.trim();
+        const username = document.getElementById("adminNewUsername").value.trim().toLowerCase();
+        const password = document.getElementById("adminNewPassword").value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Létrehozás folyamatban...`;
+
+        // Egy belső email címet képzünk a felhasználónévből
+        const email = `${username}@structural.local`;
+
+        const { data, error } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              username: username,
+              full_name: fullName,
+              role: 'user'
+            }
+          }
+        });
+
+        if (error) {
+          alertBox.textContent = "Hiba a regisztráció során: " + error.message;
+          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> Profil létrehozása`;
+          return;
+        }
+
+        // Beszúrjuk a profil táblába is
+        if (data.user) {
+          await supabase.from('profiles').insert([{
+            id: data.user.id,
+            username: username,
+            full_name: fullName,
+            role: 'user',
+            unlocked_skills: ['root'],
+            last_seen_skills: ['root']
+          }]);
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> Profil létrehozása`;
+        modal.classList.add("hidden");
+
+        // Frissítjük a helyi listát
+        const { data: updatedProfiles } = await supabase.from('profiles').select('*').order('full_name');
+        allProfiles = updatedProfiles || [];
+        activeViewingUserId = data.user.id;
+        populateEngineerDropdown();
+        renderTree();
+        updateProgressStats();
+      };
+
+      // Profil törlése
+      deleteBtn.onclick = async () => {
+        const target = getActiveProfile();
+        if (!target) return;
+
+        if (target.role === "admin" || target.username === "admin") {
+          alert("Adminisztrátori profilt nem lehet törölni!");
+          return;
+        }
+
+        const confirmed = confirm(`Biztosan törölni szeretnéd "${target.full_name}" (@${target.username}) profilját a felhőből?`);
+        if (!confirmed) return;
+
+        const { error } = await supabase.from('profiles').delete().eq('id', target.id);
+        if (error) {
+          alert("Hiba a törlés során: " + error.message);
+          return;
+        }
+
+        allProfiles = allProfiles.filter(p => p.id !== target.id);
+        activeViewingUserId = allProfiles[0].id;
+        populateEngineerDropdown();
+        renderTree();
+        updateProgressStats();
+      };
+    }
+
+    /* ==========================================================================
+       AUTHENTICATION (SUPABASE AUTH)
+       ========================================================================== */
+    function setupAuth() {
+      const loginForm = document.getElementById("loginForm");
+      const submitBtn = document.getElementById("loginSubmitBtn");
+
+      loginForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const username = document.getElementById("loginUsername").value.trim().toLowerCase();
+        const password = document.getElementById("loginPassword").value;
+        const email = `${username}@structural.local`;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Belépés...`;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
+
+        if (error) {
+          showAuthError("Helytelen felhasználónév vagy jelszó!");
+          return;
+        }
+
+        await loadUserData(data.user.id);
+        hideAuthModal();
+        loginForm.reset();
+      };
+
+      document.getElementById("logoutBtn").onclick = async () => {
+        await supabase.auth.signOut();
+        currentUserProfile = null;
+        allProfiles = [];
+        activeViewingUserId = null;
+        showAuthModal();
+      };
+    }
+
+    function showAuthError(msg) {
+      const alert = document.getElementById("authAlert");
+      alert.textContent = msg;
+      alert.className = "mb-4 p-3 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+    }
+
+    /* ==========================================================================
+       JELSZÓVÁLTOZTATÁS (SUPABASE AUTH)
+       ========================================================================== */
+    function setupChangePasswordModal() {
+      const modal = document.getElementById("changePassModal");
+      const openBtn = document.getElementById("openChangePassBtn");
+      const closeBtn = document.getElementById("changePassCloseBtn");
+      const form = document.getElementById("changePassForm");
+      const alertBox = document.getElementById("changePassAlert");
+
+      openBtn.onclick = () => {
+        form.reset();
+        alertBox.classList.add("hidden");
+        modal.classList.remove("hidden");
+      };
+
+      closeBtn.onclick = () => modal.classList.add("hidden");
+      modal.onclick = (e) => {
+        if (e.target.id === "changePassModal") modal.classList.add("hidden");
+      };
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const newPass = document.getElementById("newPassInput").value;
+        const confirmPass = document.getElementById("confirmPassInput").value;
+
+        if (newPass.length < 6) {
+          alertBox.textContent = "Az új jelszónak legalább 6 karakternek kell lennie!";
+          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-amber-500/20 border border-amber-500/40 text-amber-300 block";
+          return;
+        }
+
+        if (newPass !== confirmPass) {
+          alertBox.textContent = "Az új jelszavak nem egyeznek!";
+          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+          return;
+        }
+
+        const { error } = await supabase.auth.updateUser({ password: newPass });
+        if (error) {
+          alertBox.textContent = "Hiba: " + error.message;
+          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+          return;
+        }
+
+        alertBox.textContent = "✓ Jelszó sikeresen megváltoztatva!";
+        alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 block";
+
+        setTimeout(() => modal.classList.add("hidden"), 1200);
+      };
+    }
+  </script>
+</body>
+</html>
