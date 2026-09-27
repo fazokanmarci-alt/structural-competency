@@ -158,7 +158,6 @@
       <button data-filter="miscellaneous" class="filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition shrink-0">📦 Egyéb</button>
     </div>
 
-    <!-- Csak sima munkatársi profil esetén jelenik meg -->
     <div id="readOnlyIndicator" class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded hidden items-center gap-2 shrink-0">
       <i class="ph ph-info font-bold"></i>
       <span>Munkatársi profil: <strong>Csak olvasható</strong>. A készségeket a vezető/admin oldhatja fel.</span>
@@ -179,7 +178,7 @@
     </div>
   </div>
 
-  <!-- ==================== VÁLTOZÁSI ÉRTESÍTŐ SÁV (Mobilon is tiszta elrendezés) ==================== -->
+  <!-- ==================== VÁLTOZÁSI ÉRTESÍTŐ SÁV ==================== -->
   <div id="changeNotificationBar" class="hidden bg-gradient-to-r from-emerald-950/90 via-slate-900 to-rose-950/90 border-b border-cyan-500/40 px-3 md:px-5 py-2 z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-lg">
     <div class="flex items-center gap-2 text-xs">
       <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></div>
@@ -191,7 +190,7 @@
     </button>
   </div>
 
-  <!-- ==================== SKILL TREE VIEWPORT (PAN & ZOOM + TOUCH) ==================== -->
+  <!-- ==================== SKILL TREE VIEWPORT ==================== -->
   <main id="viewport" class="flex-1 relative overflow-hidden blueprint-grid cursor-grab active:cursor-grabbing">
     <div id="treeContainer" class="absolute transform-gpu origin-top-left transition-transform duration-75" style="width: 5000px; height: 2000px; left: 0px; top: 0px;">
       <svg id="connectionsLayer" class="absolute inset-0 w-full h-full pointer-events-none z-0" style="min-width: 5000px; min-height: 2000px; overflow: visible;">
@@ -223,9 +222,8 @@
     </div>
   </div>
 
-  <!-- ==================== SKILL MODAL (FIX MÉRET + ZOOM GOMBOKKAL) ==================== -->
+  <!-- ==================== SKILL MODAL ==================== -->
   <div id="skillModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <!-- Konténer fix alapértelmezett mérettel és skálázási wrapperrel -->
     <div id="modalContentWrapper" class="bg-blueprint-850 border border-blueprint-line w-full max-w-md rounded-xl overflow-hidden shadow-2xl transition-transform duration-150" style="font-size: 1rem;">
       <div class="px-5 py-3.5 bg-blueprint-800 border-b border-blueprint-line flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -238,7 +236,6 @@
           </div>
         </div>
 
-        <!-- Modal saját nagyítás / kicsinyítés és bezárás gombok -->
         <div class="flex items-center gap-1">
           <button id="modalZoomOut" title="Kicsinyítés" class="w-7 h-7 flex items-center justify-center bg-blueprint-900 hover:bg-blueprint-700 text-slate-300 rounded border border-blueprint-line text-xs">
             <i class="ph ph-minus"></i>
@@ -481,7 +478,7 @@
     let isDragging = false;
     let startX = 0, startY = 0;
 
-    let modalScale = 1.0; // Modal saját zoom állapota
+    let modalScale = 1.0;
 
     document.addEventListener("DOMContentLoaded", async () => {
       setupPanAndZoom();
@@ -550,6 +547,7 @@
       renderTree();
       centerRootNode();
 
+      // Valós idejű szinkronizáció
       if (!realtimeChannel && supabaseClient) {
         try {
           realtimeChannel = supabaseClient
@@ -560,8 +558,13 @@
               if (activeU && activeP) {
                 const { data: refreshed } = await supabaseClient.rpc('get_profiles', { p_username: activeU, p_password: activeP });
                 allProfiles = refreshed || [];
+                
+                // Frissítjük a bejelentkezett profil adatait is
+                const prevUnlocked = currentUserProfile.unlocked_skills || [];
                 currentUserProfile = allProfiles.find(item => item.id === currentUserProfile.id) || currentUserProfile;
+                
                 updateUIForUser();
+                detectProfileChanges(); // Újraellenőrzi, hogy érkezett-e új skill miközben nyitva volt
                 renderTree();
                 updateProgressStats();
               }
@@ -624,8 +627,6 @@
         roleBadge.className = "text-[11px] px-2 py-0.5 rounded font-mono border border-amber-400 bg-amber-500/20 text-amber-300 font-bold";
         adminSelector.classList.remove("hidden");
         adminSelector.classList.add("flex");
-        
-        // ADMIN ESETÉN SOHA NEMSZELETT ÉS MOST SEM JELENIK MEG A "CSAK OLVASHATÓ" SÁV
         readOnlyIndicator.classList.add("hidden");
         readOnlyIndicator.classList.remove("flex");
 
@@ -687,7 +688,7 @@
     }
 
     /* ==========================================================================
-       VÁLTOZÁSOK DETEKTÁLÁSA
+       VÁLTOZÁSOK DETEKTÁLÁSA ÉS BIZTONSÁGOS RÖGZÍTÉSE
        ========================================================================== */
     function detectProfileChanges() {
       newlyUnlockedSkills.clear();
@@ -726,6 +727,16 @@
 
       document.getElementById("dismissChangesBtn").onclick = async () => {
         const updatedList = Array.from(currentSkills);
+        
+        // Helyes RPC hívás a last_seen_skills frissítésére a felhőben
+        const { error } = await supabaseClient.rpc('admin_update_skills', {
+          p_admin_username: currentUserProfile.username,
+          p_admin_password: currentUserProfile.password,
+          p_target_id: currentUserProfile.id,
+          p_unlocked: currentUserProfile.unlocked_skills
+        });
+
+        // Alternatíva közvetlen mentéshez, ha szükséges, de az RPC admin_update_skills is frissíti a profilt
         await supabaseClient
           .from('profiles')
           .update({ last_seen_skills: updatedList })
@@ -950,7 +961,7 @@
     }
 
     /* ==========================================================================
-       MODAL & MŰVELETEK (ALAPÉRTELMEZETT MÉRETTEL + ZOOM GOMBOKKAL)
+       MODAL & MŰVELETEK
        ========================================================================== */
     function openSkillModal(skill) {
       selectedSkill = skill;
@@ -960,7 +971,6 @@
       const parent = SKILLS_DATA.find(s => s.id === skill.parentId);
       const parentUnlocked = !parent || unlockedSet.has(parent.id);
 
-      // Reset modal zoom alaphelyzetbe megnyitáskor (1.0)
       modalScale = 1.0;
       updateModalScale();
 
@@ -1065,7 +1075,6 @@
         if (e.target.id === "skillModal") document.getElementById("skillModal").classList.add("hidden");
       };
 
-      // Modal belső zoom gombok
       document.getElementById("modalZoomIn").onclick = () => {
         if (modalScale < 1.6) {
           modalScale += 0.15;
@@ -1141,7 +1150,7 @@
     }
 
     /* ==========================================================================
-       PAN & ZOOM + TOUCH (MOBIL TÁMOGATÁS)
+       PAN & ZOOM + TOUCH
        ========================================================================== */
     function clampPan(x, y, currentScale) {
       const viewport = document.getElementById("viewport");
@@ -1179,7 +1188,6 @@
         document.getElementById("zoomLevelText").textContent = `${Math.round(scale * 100)}%`;
       }
 
-      // Egér (PC)
       viewport.addEventListener("mousedown", (e) => {
         if (
           e.target.closest("button") || 
@@ -1202,7 +1210,6 @@
 
       window.addEventListener("mouseup", () => isDragging = false);
 
-      // Érintés (Mobil húzás)
       viewport.addEventListener("touchstart", (e) => {
         if (
           e.target.closest("button") || 
@@ -1267,7 +1274,7 @@
 
     function centerRootNode() {
       const viewport = document.getElementById("viewport");
-      scale = 0.35; // Pontosan 35%-os méret középre rendezéskor
+      scale = 0.35;
       panX = (viewport.clientWidth / 2) - (2300 * scale);
       panY = 40;
 
