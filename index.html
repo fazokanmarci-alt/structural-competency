@@ -1258,42 +1258,66 @@
     }
 
     /* ==========================================================================
-       AUTHENTICATION (EGYSZERŰ, KÖZVETLEN CLOUD BEJELENTKEZÉS)
+       AUTHENTICATION (GOLYÓÁLLÓ HIBAKEZELÉSSEL)
        ========================================================================== */
     function setupAuth() {
       const loginForm = document.getElementById("loginForm");
       const submitBtn = document.getElementById("loginSubmitBtn");
 
       loginForm.onsubmit = async (e) => {
+        // Megakadályozzuk az oldal újratöltődését és a mezők kiürülését!
         e.preventDefault();
-        const username = document.getElementById("loginUsername").value.trim().toLowerCase();
-        const password = document.getElementById("loginPassword").value;
+        e.stopPropagation();
+
+        const usernameInput = document.getElementById("loginUsername");
+        const passwordInput = document.getElementById("loginPassword");
+        const username = usernameInput.value.trim().toLowerCase();
+        const password = passwordInput.value;
 
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Belépés...`;
 
-        // Közvetlen hitelesítés az adatbázisból
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('username', username)
-          .eq('password', password)
-          .single();
+        try {
+          // Lekérjük a profilt a felhasználónév alapján
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('username', username)
+            .maybeSingle();
 
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
 
-        if (error || !profile) {
-          showAuthError("Helytelen felhasználónév vagy jelszó!");
-          return;
+          if (error) {
+            console.error("Supabase hiba:", error);
+            showAuthError("Adatbázis kapcsolódási hiba: " + error.message);
+            return;
+          }
+
+          if (!profile) {
+            showAuthError("Nem létezik ilyen felhasználónév!");
+            return;
+          }
+
+          if (profile.password !== password) {
+            showAuthError("Helytelen jelszó!");
+            return;
+          }
+
+          // Sikeres belépés
+          currentUserProfile = profile;
+          localStorage.setItem(STORAGE_KEY_SESSION_USER, username);
+
+          await loadAllProfilesAndInit();
+          hideAuthModal();
+          loginForm.reset();
+
+        } catch (err) {
+          console.error("Váratlan hiba:", err);
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
+          showAuthError("Váratlan hiba történt a belépéskor!");
         }
-
-        currentUserProfile = profile;
-        localStorage.setItem(STORAGE_KEY_SESSION_USER, username);
-
-        await loadAllProfilesAndInit();
-        hideAuthModal();
-        loginForm.reset();
       };
 
       document.getElementById("logoutBtn").onclick = () => {
