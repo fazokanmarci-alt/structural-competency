@@ -222,9 +222,8 @@
     </div>
   </div>
 
-  <!-- ==================== SKILL MODAL (FIX KÉPERNYŐ-ALAPÚ MÉRET) ==================== -->
+  <!-- ==================== SKILL MODAL ==================== -->
   <div id="skillModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <!-- Teljesen függetlenítve a fa skálájától, PC-n eggyel nagyobb (max-w-lg) -->
     <div id="modalContentWrapper" class="bg-blueprint-850 border border-blueprint-line w-full max-w-lg rounded-xl overflow-hidden shadow-2xl transition-transform duration-150" style="font-size: 1rem;">
       <div class="px-6 py-4 bg-blueprint-800 border-b border-blueprint-line flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -543,7 +542,6 @@
         activeViewingUserId = currentUserProfile.id;
       }
 
-      // Frissítjük a bejelentkezett profil aktuális adatait is a listából
       currentUserProfile = allProfiles.find(item => item.id === currentUserProfile.id) || currentUserProfile;
 
       updateUIForUser();
@@ -551,7 +549,7 @@
       renderTree();
       centerRootNode();
 
-      // Valós idejű szinkronizáció
+      // Valós idejű szinkronizáció (Realtime)
       if (!realtimeChannel && supabaseClient) {
         try {
           realtimeChannel = supabaseClient
@@ -566,7 +564,7 @@
                 currentUserProfile = allProfiles.find(item => item.id === currentUserProfile.id) || currentUserProfile;
                 
                 updateUIForUser();
-                detectProfileChanges(); // Azonnal frissíti az értesítési sávot is
+                detectProfileChanges(); // Azonnal frissíti az értesítési sávot is élőben
                 renderTree();
                 updateProgressStats();
               }
@@ -730,8 +728,8 @@
       document.getElementById("dismissChangesBtn").onclick = async () => {
         const updatedList = Array.from(currentSkills);
         
-        // Biztonságos RPC hívás a nyugtázáshoz, hogy a felhőbe is elmentődjön
         try {
+          // Biztonságos RPC hívás az értesítés rögzítéséhez a felhőben
           await supabaseClient.rpc('update_last_seen_skills', {
             p_username: currentUserProfile.username,
             p_password: currentUserProfile.password,
@@ -960,7 +958,7 @@
     }
 
     /* ==========================================================================
-       MODAL & MŰVELETEK (ALAPÉRTELMEZETT BIZTOS MÉRET)
+       MODAL & MŰVELETEK (FIX KÉPERNYŐ-ALAPÚ MÉRET + PC-n EGGYEL NAGYOBB)
        ========================================================================== */
     function openSkillModal(skill) {
       selectedSkill = skill;
