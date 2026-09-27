@@ -158,7 +158,7 @@
       <button data-filter="miscellaneous" class="filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition shrink-0">📦 Egyéb</button>
     </div>
 
-    <!-- Csak sima munkatársi profil esetén jelenik meg a "Csak olvasható" sáv -->
+    <!-- Csak sima munkatársi profil esetén jelenik meg -->
     <div id="readOnlyIndicator" class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded hidden items-center gap-2 shrink-0">
       <i class="ph ph-info font-bold"></i>
       <span>Munkatársi profil: <strong>Csak olvasható</strong>. A készségeket a vezető/admin oldhatja fel.</span>
@@ -179,15 +179,15 @@
     </div>
   </div>
 
-  <!-- ==================== VÁLTOZÁSI ÉRTESÍTŐ SÁV ==================== -->
-  <div id="changeNotificationBar" class="hidden bg-gradient-to-r from-emerald-950/90 via-slate-900 to-rose-950/90 border-b border-cyan-500/40 px-5 py-2 z-20 flex items-center justify-between shadow-lg">
-    <div class="flex items-center gap-2.5 text-xs">
-      <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+  <!-- ==================== VÁLTOZÁSI ÉRTESÍTŐ SÁV (Mobilon is tiszta elrendezés) ==================== -->
+  <div id="changeNotificationBar" class="hidden bg-gradient-to-r from-emerald-950/90 via-slate-900 to-rose-950/90 border-b border-cyan-500/40 px-3 md:px-5 py-2 z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-lg">
+    <div class="flex items-center gap-2 text-xs">
+      <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></div>
       <span class="font-bold text-white">Változások a legutóbbi belépésed óta:</span>
       <span id="changeNotificationText" class="text-slate-200"></span>
     </div>
-    <button id="dismissChangesBtn" class="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 rounded text-xs font-semibold flex items-center gap-1.5 transition">
-      <i class="ph-bold ph-check"></i> Megértettem / Nyugtázom
+    <button id="dismissChangesBtn" class="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 rounded text-xs font-semibold flex items-center gap-1.5 transition shrink-0 ml-auto sm:ml-0">
+      <i class="ph-bold ph-check"></i> Nyugtázom
     </button>
   </div>
 
@@ -223,42 +223,53 @@
     </div>
   </div>
 
-  <!-- ==================== SKILL MODAL ==================== -->
+  <!-- ==================== SKILL MODAL (FIX MÉRET + ZOOM GOMBOKKAL) ==================== -->
   <div id="skillModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-blueprint-850 border border-blueprint-line w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
-      <div class="px-6 py-4 bg-blueprint-800 border-b border-blueprint-line flex items-center justify-between">
+    <!-- Konténer fix alapértelmezett mérettel és skálázási wrapperrel -->
+    <div id="modalContentWrapper" class="bg-blueprint-850 border border-blueprint-line w-full max-w-md rounded-xl overflow-hidden shadow-2xl transition-transform duration-150" style="font-size: 1rem;">
+      <div class="px-5 py-3.5 bg-blueprint-800 border-b border-blueprint-line flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div id="modalIconBox" class="w-10 h-10 rounded-lg flex items-center justify-center text-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+          <div id="modalIconBox" class="w-9 h-9 rounded-lg flex items-center justify-center text-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
             <i id="modalIcon" class="ph ph-cube"></i>
           </div>
           <div>
-            <span id="modalCategory" class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-bold">Kategória</span>
-            <h2 id="modalTitle" class="text-lg font-bold text-white">Készség neve</h2>
+            <span id="modalCategory" class="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold">Kategória</span>
+            <h2 id="modalTitle" class="text-base font-bold text-white">Készség neve</h2>
           </div>
         </div>
-        <button id="modalCloseBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-blueprint-700">
-          <i class="ph ph-x text-xl"></i>
-        </button>
+
+        <!-- Modal saját nagyítás / kicsinyítés és bezárás gombok -->
+        <div class="flex items-center gap-1">
+          <button id="modalZoomOut" title="Kicsinyítés" class="w-7 h-7 flex items-center justify-center bg-blueprint-900 hover:bg-blueprint-700 text-slate-300 rounded border border-blueprint-line text-xs">
+            <i class="ph ph-minus"></i>
+          </button>
+          <button id="modalZoomIn" title="Nagyítás" class="w-7 h-7 flex items-center justify-center bg-blueprint-900 hover:bg-blueprint-700 text-slate-300 rounded border border-blueprint-line text-xs">
+            <i class="ph ph-plus"></i>
+          </button>
+          <button id="modalCloseBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-blueprint-700 ml-1">
+            <i class="ph ph-x text-lg"></i>
+          </button>
+        </div>
       </div>
 
-      <div class="p-6 space-y-4">
+      <div class="p-5 space-y-3.5">
         <div>
-          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Követelmény és Kompetencia</h4>
-          <p id="modalDescription" class="text-slate-200 text-sm leading-relaxed bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line"></p>
+          <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Követelmény és Kompetencia</h4>
+          <p id="modalDescription" class="text-slate-200 text-xs leading-relaxed bg-blueprint-900/80 p-2.5 rounded-lg border border-blueprint-line"></p>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 text-xs">
-          <div class="bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line">
-            <div class="text-slate-400 mb-0.5">Közvetlen előfeltétel:</div>
-            <div id="modalPrereq" class="font-semibold text-slate-200">Structural (Gyökér)</div>
+        <div class="grid grid-cols-2 gap-2.5 text-xs">
+          <div class="bg-blueprint-900/80 p-2.5 rounded-lg border border-blueprint-line">
+            <div class="text-slate-400 text-[10px] mb-0.5">Közvetlen előfeltétel:</div>
+            <div id="modalPrereq" class="font-semibold text-slate-200 text-xs">Structural (Gyökér)</div>
           </div>
-          <div class="bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line">
-            <div class="text-slate-400 mb-0.5">Aktuális státusz:</div>
-            <div id="modalStatusBadge" class="font-bold">Feloldva</div>
+          <div class="bg-blueprint-900/80 p-2.5 rounded-lg border border-blueprint-line">
+            <div class="text-slate-400 text-[10px] mb-0.5">Aktuális státusz:</div>
+            <div id="modalStatusBadge" class="font-bold text-xs">Feloldva</div>
           </div>
         </div>
 
-        <div id="modalActionArea" class="pt-2"></div>
+        <div id="modalActionArea" class="pt-1"></div>
       </div>
     </div>
   </div>
@@ -469,6 +480,8 @@
     let panX = 0, panY = 0;
     let isDragging = false;
     let startX = 0, startY = 0;
+
+    let modalScale = 1.0; // Modal saját zoom állapota
 
     document.addEventListener("DOMContentLoaded", async () => {
       setupPanAndZoom();
@@ -937,7 +950,7 @@
     }
 
     /* ==========================================================================
-       MODAL & MŰVELETEK
+       MODAL & MŰVELETEK (ALAPÉRTELMEZETT MÉRETTEL + ZOOM GOMBOKKAL)
        ========================================================================== */
     function openSkillModal(skill) {
       selectedSkill = skill;
@@ -946,6 +959,10 @@
       const isUnlocked = unlockedSet.has(skill.id);
       const parent = SKILLS_DATA.find(s => s.id === skill.parentId);
       const parentUnlocked = !parent || unlockedSet.has(parent.id);
+
+      // Reset modal zoom alaphelyzetbe megnyitáskor (1.0)
+      modalScale = 1.0;
+      updateModalScale();
 
       document.getElementById("modalCategory").textContent = skill.categoryName;
       document.getElementById("modalTitle").textContent = skill.title;
@@ -983,7 +1000,7 @@
               <div class="text-xs text-slate-300">
                 Munkatárs: <span class="font-bold text-cyan-300">${profile.full_name}</span>. Ez a készség jelenleg aktív.
               </div>
-              <button id="adminRevokeBtn" class="w-full py-2.5 px-4 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold rounded-lg transition flex items-center justify-center gap-2 text-sm">
+              <button id="adminRevokeBtn" class="w-full py-2 px-4 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold rounded-lg transition flex items-center justify-center gap-2 text-xs">
                 <i class="ph-bold ph-lock-key"></i> Készség visszavonása (Zárolás)
               </button>
             </div>
@@ -996,7 +1013,7 @@
                 <div class="text-xs text-slate-300">
                   Munkatárs: <span class="font-bold text-cyan-300">${profile.full_name}</span>. Az előfeltétel teljesült.
                 </div>
-                <button id="adminUnlockBtn" class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition flex items-center justify-center gap-2 text-sm shadow-lg">
+                <button id="adminUnlockBtn" class="w-full py-2 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition flex items-center justify-center gap-2 text-xs shadow-lg">
                   <i class="ph-bold ph-check-circle"></i> Készség feloldása (Unlock Skill)
                 </button>
               </div>
@@ -1004,14 +1021,14 @@
             document.getElementById("adminUnlockBtn").onclick = () => unlockSkill(skill.id);
           } else {
             actionArea.innerHTML = `
-              <div class="p-3.5 bg-rose-950/40 border border-rose-500/50 rounded-lg text-xs space-y-2">
+              <div class="p-3 bg-rose-950/40 border border-rose-500/50 rounded-lg text-xs space-y-1.5">
                 <div class="flex items-center gap-2 text-rose-400 font-bold">
                   <i class="ph-bold ph-prohibit text-base"></i> Nem oldható fel!
                 </div>
                 <p class="text-slate-300 leading-relaxed">
                   A készség feloldásához először a közvetlen előfeltételt (<span class="text-amber-400 font-semibold">${parent.title}</span>) kell feloldani ennél a munkatársnál.
                 </p>
-                <button disabled class="w-full py-2 px-4 bg-slate-800 text-slate-500 font-bold rounded-lg cursor-not-allowed border border-slate-700 flex items-center justify-center gap-2">
+                <button disabled class="w-full py-1.5 px-3 bg-slate-800 text-slate-500 font-bold rounded-lg cursor-not-allowed border border-slate-700 flex items-center justify-center gap-2">
                   <i class="ph ph-lock"></i> Előfeltétel hiányzik (Letiltva)
                 </button>
               </div>
@@ -1020,7 +1037,7 @@
         }
       } else {
         actionArea.innerHTML = `
-          <div class="p-3.5 bg-blueprint-900 border border-blueprint-line rounded-lg text-xs space-y-1.5">
+          <div class="p-3 bg-blueprint-900 border border-blueprint-line rounded-lg text-xs space-y-1">
             <div class="flex items-center gap-2 text-cyan-300 font-semibold">
               <i class="ph ph-lock-simple text-base"></i> Munkatársi profil (Csak megtekintés)
             </div>
@@ -1034,10 +1051,32 @@
       document.getElementById("skillModal").classList.remove("hidden");
     }
 
+    function updateModalScale() {
+      const wrapper = document.getElementById("modalContentWrapper");
+      if (wrapper) {
+        wrapper.style.transform = `scale(${modalScale})`;
+        wrapper.style.transformOrigin = "center center";
+      }
+    }
+
     function setupModalEvents() {
       document.getElementById("modalCloseBtn").onclick = () => document.getElementById("skillModal").classList.add("hidden");
       document.getElementById("skillModal").onclick = (e) => {
         if (e.target.id === "skillModal") document.getElementById("skillModal").classList.add("hidden");
+      };
+
+      // Modal belső zoom gombok
+      document.getElementById("modalZoomIn").onclick = () => {
+        if (modalScale < 1.6) {
+          modalScale += 0.15;
+          updateModalScale();
+        }
+      };
+      document.getElementById("modalZoomOut").onclick = () => {
+        if (modalScale > 0.75) {
+          modalScale -= 0.15;
+          updateModalScale();
+        }
       };
     }
 
