@@ -452,6 +452,7 @@
     let activeFilter = "all";
     let selectedSkill = null;
     let isCredentialsRevealed = false;
+    let realtimeChannel = null;
 
     let newlyUnlockedSkills = new Set();
     let newlyRevokedSkills = new Set();
@@ -524,21 +525,23 @@
       renderTree();
       centerRootNode();
 
-      // Valós idejű szinkronizáció
-      try {
-        supabaseClient
-          .channel('public:profiles')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
-            const { data: refreshed } = await supabaseClient.from('profiles').select('*').order('full_name');
-            allProfiles = refreshed || [];
-            currentUserProfile = allProfiles.find(p => p.id === currentUserProfile.id) || currentUserProfile;
-            updateUIForUser();
-            renderTree();
-            updateProgressStats();
-          })
-          .subscribe();
-      } catch (e) {
-        console.warn("Realtime sub warning:", e);
+      // Valós idejű szinkronizáció (csak egyszer iratkozunk fel)
+      if (!realtimeChannel && supabaseClient) {
+        try {
+          realtimeChannel = supabaseClient
+            .channel('profiles-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
+              const { data: refreshed } = await supabaseClient.from('profiles').select('*').order('full_name');
+              allProfiles = refreshed || [];
+              currentUserProfile = allProfiles.find(p => p.id === currentUserProfile.id) || currentUserProfile;
+              updateUIForUser();
+              renderTree();
+              updateProgressStats();
+            })
+            .subscribe();
+        } catch (e) {
+          console.warn("Realtime sub warning:", e);
+        }
       }
     }
 
