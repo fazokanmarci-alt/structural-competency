@@ -420,14 +420,14 @@
 
       { id: "lathe_cnc_basic", title: "CNC esztergálás alapok", category: "metallic", categoryName: "CNC Esztergálás", parentId: "metal_mfg_basic", icon: "ph ph-code", desc: "ISO G-kód alapok, szerszámbemérés (geometria/kopás), koordináta-rendszerek.", x: 2200, y: 680 },
       { id: "lathe_cnc_adv", title: "CNC esztergálás haladó", category: "metallic", categoryName: "CNC Esztergálás", parentId: "lathe_cnc_basic", icon: "ph ph-cpu", desc: "Ciklusos programozás, CAM szoftveres programozás, magabiztos gépkezelés és forgácsolási paraméterek.", x: 2200, y: 890 },
-      { id: "lathe_cnc_master", title: "CNC esztergálás mester", category: "metallic", categoryName: "CNC Esztergálás", parentId: "lathe_cnc_adv", icon: "ph ph-faders", desc: "Hajtott szerszámok kezelése, egyedi készülék/befogások tervezése", x: 2200, y: 1100 },
+      { id: "lathe_cnc_master", title: "CNC esztergálás mester", category: "metallic", categoryName: "CNC Esztergálás", parentId: "lathe_cnc_adv", icon: "ph ph-faders", desc: "Hajtott szerszámok kezelése, egyedi készülék/befogások tervezése.", x: 2200, y: 1100 },
 
-      { id: "mill_cnc_basic", title: "CNC marás alapok", category: "metallic", categoryName: "CNC Marás", parentId: "metal_mfg_basic", icon: "ph ph-terminal-window", desc: "Alapszintű 2-tengelyes programozás alapszintű CAM ismeretek segítségével, munkadarab nullpontfelvétel", x: 2500, y: 680 },
+      { id: "mill_cnc_basic", title: "CNC marás alapok", category: "metallic", categoryName: "CNC Marás", parentId: "metal_mfg_basic", icon: "ph ph-terminal-window", desc: "Alapszintű 2-tengelyes programozás alapszintű CAM ismeretek segítségével, munkadarab nullpontfelvétel.", x: 2500, y: 680 },
       { id: "mill_cnc_adv", title: "CNC marás haladó", category: "metallic", categoryName: "CNC Marás", parentId: "mill_cnc_basic", icon: "ph ph-arrows-out-cardinal", desc: "3-tengelyes programozás, munkadarab nullpontfelvétel, alap interpolációk.", x: 2500, y: 890 },
       { id: "mill_cnc_master", title: "CNC marás mester", category: "metallic", categoryName: "CNC Marás", parentId: "mill_cnc_adv", icon: "ph ph-diamonds-four", desc: "3+2 tengelyes pozicionált marás, adaptív zsebmarási stratégiák és CAM posztolás, szimultán 5-tengelyes simítás, nagy sebességű forgácsolás (HSM).", x: 2500, y: 1100 },
 
       { id: "fdm_basic", title: "FDM 3D nyomtatás alapok", category: "polymer", categoryName: "FDM Nyomtatás", parentId: "poly_theory", icon: "ph ph-printer", desc: "FDM rétegépítés elve, PLA/PETG paraméterek, alap szeletelés és szintezés.", x: 2850, y: 470 },
-      { id: "fdm_adv", title: "FDM 3D nyomtatás haladó", category: "polymer", categoryName: "FDM Nyomtatás", parentId: "fdm_basic", icon: "ph ph-bounding-box", desc: "DFMA elvek, gyártási határok ismerete", x: 2850, y: 680 },
+      { id: "fdm_adv", title: "FDM 3D nyomtatás haladó", category: "polymer", categoryName: "FDM Nyomtatás", parentId: "fdm_basic", icon: "ph ph-bounding-box", desc: "DFMA elvek, gyártási határok ismerete.", x: 2850, y: 680 },
       { id: "fdm_master", title: "FDM 3D nyomtatás mester", category: "polymer", categoryName: "FDM Nyomtatás", parentId: "fdm_adv", icon: "ph ph-thermometer-hot", desc: "Műszaki polimerek (ABS, Nylon, PC), fűtött kamra és támaszanyag optimalizáció.", x: 2850, y: 890 },
 
       { id: "sls_basic", title: "SLS alapok", category: "polymer", categoryName: "SLS Nyomtatás", parentId: "poly_theory", icon: "ph ph-dots-nine", desc: "Szelektív lézerszinterezés elve, PA12 por tulajdonságai és kamrafűtés.", x: 3110, y: 470 },
@@ -441,7 +441,7 @@
       { id: "misc_cad_basic", title: "CAD tervezési alapok", category: "miscellaneous", categoryName: "CAD használat", parentId: "miscellaneous", icon: "ph ph-pencil-line", desc: "Egyszerűbb alkatrészek és összeállítások tervezése.", x: 4000, y: 470 },
       { id: "misc_cad_adv", title: "CAD tervezés haladó", category: "miscellaneous", categoryName: "CAD használat", parentId: "misc_cad_basic", icon: "ph ph-cube-transparent", desc: "Bonyolultabb alkatrészek tervezése, a TOP-DOWN és a BOTTOM-UP tervezés ismerete, paraméteres tervezés.", x: 4000, y: 680 },
       { id: "misc_rendering_basic", title: "Alkatrészek és összeállítások renderelési alapjai", category: "miscellaneous", categoryName: "Renderelés alapok", parentId: "miscellaneous", icon: "ph ph-paint-brush-broad", desc: "Alapszintű, CAD szoftverbeli renderelési készség.", x: 4300, y: 470 },
-      { id: "misc_rendering_adv", title: "Alkatrészek és összeállítások renderelése haladó szinten", category: "miscellaneous", categoryName: "Renderelés haladó", parentId: "misc_rendering_basic", icon: "ph ph-projector-screen", desc: "Blender-beli valósághű textúrázás, fénybeállítások és professzionális termékvizualizáció", x: 4300, y: 680 }
+      { id: "misc_rendering_adv", title: "Alkatrészek és összeállítások renderelése haladó szinten", category: "miscellaneous", categoryName: "Renderelés haladó", parentId: "misc_rendering_basic", icon: "ph ph-projector-screen", desc: "Blender-beli valósághű textúrázás, fénybeállítások és professzionális termékvizualizáció.", x: 4300, y: 680 }
     ];
 
     /* ==========================================================================
