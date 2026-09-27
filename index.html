@@ -83,7 +83,7 @@
           Structural előrehaladás
           <span id="roleBadge" class="text-xs px-2 py-0.5 rounded font-mono border"></span>
         </h1>
-        <p class="text-xs text-slate-400 font-medium">Tervezési és Gyártástechnológiai Kompetenciafa (Cloud szinkronizált)</p>
+        <p class="text-xs text-slate-400 font-medium">Tervezési és Gyártástechnológiai Kompetenciafa (Biztonságos felhő)</p>
       </div>
     </div>
 
@@ -97,7 +97,6 @@
       <select id="engineerSelect" class="bg-blueprint-900 border border-blueprint-line text-cyan-300 text-xs font-semibold rounded px-2.5 py-1 focus:outline-none focus:border-amber-400 cursor-pointer max-w-[200px] truncate">
       </select>
 
-      <!-- Belépési adatok kijelző doboz az adminnak (User + Pass) -->
       <div class="flex items-center gap-1.5 bg-blueprint-900/90 border border-blueprint-line px-2.5 py-1 rounded text-xs font-mono">
         <i class="ph ph-key text-amber-400"></i>
         <span id="adminCredentialsDisplay" class="text-amber-300 font-bold tracking-wider">••••••••</span>
@@ -325,7 +324,6 @@
           </div>
         </div>
 
-        <!-- EMLÉKEZZ RÁM CHECKBOX -->
         <div class="flex items-center justify-between text-xs text-slate-300">
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input type="checkbox" id="rememberMeCheckbox" class="rounded bg-blueprint-900 border-blueprint-line text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer">
@@ -376,7 +374,7 @@
     </div>
   </div>
 
-  <!-- ==================== LOGIKA ==================== -->
+  <!-- ==================== LOGIKA (BIZTONSÁGOS RPC HÍVÁSOKKAL) ==================== -->
   <script>
     const SUPABASE_URL = "https://ngqqaaxerrcxuiqmykol.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncXFhYXhlcnJjeHVpcW15a29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MDA5MDQsImV4cCI6MjEwNjA3NjkwNH0.bUimk8oN2ezMMFuMWK8R0nvPbxxe6GcLR_fFTL0VLH0";
@@ -450,6 +448,7 @@
        ÁLLAPOT & VÁLTOZÓK
        ========================================================================== */
     const STORAGE_KEY_SESSION_USER = "structural_app_logged_username";
+    const STORAGE_KEY_SESSION_PASS = "structural_app_logged_password";
     let currentUserProfile = null;
     let allProfiles = [];
     let activeViewingUserId = null;
@@ -477,22 +476,22 @@
     });
 
     /* ==========================================================================
-       SESSION & FELHŐ ADATBÁZIS
+       SESSION & BIZTONSÁGOS RPC ADATBÁZIS LEKÉRDEZÉS
        ========================================================================== */
     async function checkAuthSession() {
       const savedUsername = localStorage.getItem(STORAGE_KEY_SESSION_USER) || sessionStorage.getItem(STORAGE_KEY_SESSION_USER);
+      const savedPassword = localStorage.getItem(STORAGE_KEY_SESSION_PASS) || sessionStorage.getItem(STORAGE_KEY_SESSION_PASS);
 
-      if (savedUsername && supabaseClient) {
+      if (savedUsername && savedPassword && supabaseClient) {
         try {
-          const { data: profile } = await supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('username', savedUsername)
-            .maybeSingle();
+          const { data, error } = await supabaseClient.rpc('login_user', {
+            p_username: savedUsername,
+            p_password: savedPassword
+          });
 
-          if (profile) {
-            currentUserProfile = profile;
-            await loadAllProfilesAndInit();
+          if (!error && data && data.length > 0) {
+            currentUserProfile = data[0];
+            await loadAllProfilesAndInit(savedUsername, savedPassword);
             hideAuthModal();
             return;
           }
@@ -503,13 +502,17 @@
       showAuthModal();
     }
 
-    async function loadAllProfilesAndInit() {
+    async function loadAllProfilesAndInit(username, password) {
       if (!supabaseClient) return;
 
-      const { data: profiles, error } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .order('full_name');
+      const u = username || currentUserProfile.username;
+      const p = password || currentUserProfile.password;
+
+      // Biztonságos RPC hívás a profilok lekérésére
+      const { data: profiles, error } = await supabaseClient.rpc('get_profiles', {
+        p_username: u,
+        p_password: p
+      });
 
       if (error) {
         alert("Nem sikerült kapcsolódni az adatbázishoz: " + error.message);
@@ -530,18 +533,22 @@
       renderTree();
       centerRootNode();
 
-      // Valós idejű szinkronizáció duplikáció nélkül
+      // Valós idejű szinkronizáció
       if (!realtimeChannel && supabaseClient) {
         try {
           realtimeChannel = supabaseClient
             .channel('profiles-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
-              const { data: refreshed } = await supabaseClient.from('profiles').select('*').order('full_name');
-              allProfiles = refreshed || [];
-              currentUserProfile = allProfiles.find(p => p.id === currentUserProfile.id) || currentUserProfile;
-              updateUIForUser();
-              renderTree();
-              updateProgressStats();
+              const activeU = currentUserProfile ? currentUserProfile.username : null;
+              const activeP = currentUserProfile ? currentUserProfile.password : null;
+              if (activeU && activeP) {
+                const { data: refreshed } = await supabaseClient.rpc('get_profiles', { p_username: activeU, p_password: activeP });
+                allProfiles = refreshed || [];
+                currentUserProfile = allProfiles.find(item => item.id === currentUserProfile.id) || currentUserProfile;
+                updateUIForUser();
+                renderTree();
+                updateProgressStats();
+              }
             })
             .subscribe();
         } catch (e) {
@@ -922,7 +929,7 @@
     }
 
     /* ==========================================================================
-       MODAL & MŰVELETEK (KÖZVETLEN CLOUD ADATBÁZIS MENTÉSSEL)
+       MODAL & MŰVELETEK (BIZTONSÁGOS RPC MENTÉSSEL)
        ========================================================================== */
     function openSkillModal(skill) {
       selectedSkill = skill;
@@ -1031,10 +1038,14 @@
       const currentList = profile.unlocked_skills || ["root"];
       if (!currentList.includes(skillId)) {
         const updated = [...currentList, skillId];
-        const { error } = await supabaseClient
-          .from('profiles')
-          .update({ unlocked_skills: updated })
-          .eq('id', profile.id);
+        
+        // Biztonságos RPC hívás az admin frissítéshez
+        const { error } = await supabaseClient.rpc('admin_update_skills', {
+          p_admin_username: currentUserProfile.username,
+          p_admin_password: currentUserProfile.password,
+          p_target_id: profile.id,
+          p_unlocked: updated
+        });
 
         if (error) {
           alert("Hiba a feloldás során: " + error.message);
@@ -1065,10 +1076,12 @@
       }
       revokeChildren(skillId);
 
-      const { error } = await supabaseClient
-        .from('profiles')
-        .update({ unlocked_skills: updated })
-        .eq('id', profile.id);
+      const { error } = await supabaseClient.rpc('admin_update_skills', {
+        p_admin_username: currentUserProfile.username,
+        p_admin_password: currentUserProfile.password,
+        p_target_id: profile.id,
+        p_unlocked: updated
+      });
 
       if (error) {
         alert("Hiba a mentés során: " + error.message);
@@ -1182,7 +1195,7 @@
 
     function centerRootNode() {
       const viewport = document.getElementById("viewport");
-      scale = 0.55;
+      scale = 0.35;
       panX = (viewport.clientWidth / 2) - (2300 * scale);
       panY = 40;
 
@@ -1272,8 +1285,8 @@
           }
 
           modal.classList.add("hidden");
-          const { data: updatedProfiles } = await supabaseClient.from('profiles').select('*').order('full_name');
-          allProfiles = updatedProfiles || [];
+          const refreshed = await supabaseClient.rpc('get_profiles', { p_username: currentUserProfile.username, p_password: currentUserProfile.password });
+          allProfiles = refreshed.data || [];
           if (data && data[0]) {
             activeViewingUserId = data[0].id;
           }
@@ -1312,7 +1325,7 @@
     }
 
     /* ==========================================================================
-       AUTHENTICATION (EGYSÉGES HIBAÜZENET + EMLÉKEZZ RÁM)
+       AUTHENTICATION (RPC BIZTONSÁGOS BEJELENTKEZÉS)
        ========================================================================== */
     function setupAuth() {
       const submitBtn = document.getElementById("loginSubmitBtn");
@@ -1339,38 +1352,35 @@
         submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Belépés...`;
 
         try {
-          const { data: profile, error } = await supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('username', username)
-            .maybeSingle();
+          // Biztonságos RPC hívás a bejelentkezéshez
+          const { data, error } = await supabaseClient.rpc('login_user', {
+            p_username: username,
+            p_password: password
+          });
 
           submitBtn.disabled = false;
           submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
 
-          if (error) {
-            console.error("Supabase hiba:", error);
-            showAuthError("Adatbázis kapcsolódási hiba: " + error.message);
-            return;
-          }
-
-          // Egységes hibaüzenet mindkét esetben:
-          if (!profile || profile.password !== password) {
+          if (error || !data || data.length === 0) {
             showAuthError("Helytelen felhasználónév vagy jelszó!");
             return;
           }
 
-          // Sikeres belépés: tárolás 'Emlékezz rám' szerint
-          currentUserProfile = profile;
+          currentUserProfile = data[0];
+
           if (rememberMe) {
             localStorage.setItem(STORAGE_KEY_SESSION_USER, username);
+            localStorage.setItem(STORAGE_KEY_SESSION_PASS, password);
             sessionStorage.removeItem(STORAGE_KEY_SESSION_USER);
+            sessionStorage.removeItem(STORAGE_KEY_SESSION_PASS);
           } else {
             sessionStorage.setItem(STORAGE_KEY_SESSION_USER, username);
+            sessionStorage.setItem(STORAGE_KEY_SESSION_PASS, password);
             localStorage.removeItem(STORAGE_KEY_SESSION_USER);
+            localStorage.removeItem(STORAGE_KEY_SESSION_PASS);
           }
 
-          await loadAllProfilesAndInit();
+          await loadAllProfilesAndInit(username, password);
           hideAuthModal();
           document.getElementById("loginForm").reset();
 
@@ -1395,7 +1405,9 @@
       if (logoutBtn) {
         logoutBtn.onclick = () => {
           localStorage.removeItem(STORAGE_KEY_SESSION_USER);
+          localStorage.removeItem(STORAGE_KEY_SESSION_PASS);
           sessionStorage.removeItem(STORAGE_KEY_SESSION_USER);
+          sessionStorage.removeItem(STORAGE_KEY_SESSION_PASS);
           currentUserProfile = null;
           allProfiles = [];
           activeViewingUserId = null;
@@ -1475,6 +1487,12 @@
           }
 
           currentUserProfile.password = newPass;
+          if (localStorage.getItem(STORAGE_KEY_SESSION_USER)) {
+            localStorage.setItem(STORAGE_KEY_SESSION_PASS, newPass);
+          } else if (sessionStorage.getItem(STORAGE_KEY_SESSION_USER)) {
+            sessionStorage.setItem(STORAGE_KEY_SESSION_PASS, newPass);
+          }
+
           alertBox.textContent = "✓ Jelszó sikeresen megváltoztatva!";
           alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 block";
 
