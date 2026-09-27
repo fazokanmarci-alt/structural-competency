@@ -10,7 +10,7 @@
   <!-- Phosphor Icons CDN -->
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
   <!-- Supabase JS Client CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   
   <script>
     tailwind.config = {
@@ -274,7 +274,7 @@
 
       <div id="changePassAlert" class="hidden mb-3 p-2.5 rounded-lg text-xs font-semibold"></div>
 
-      <form id="changePassForm" class="space-y-3">
+      <form id="changePassForm" class="space-y-3" onsubmit="return false;">
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Jelenlegi jelszó</label>
           <input type="password" id="currentPassInput" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="••••••••">
@@ -288,7 +288,7 @@
           <input type="password" id="confirmPassInput" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="••••••••">
         </div>
 
-        <button type="submit" class="w-full py-2.5 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-4 text-xs">
+        <button type="button" id="savePassBtn" class="w-full py-2.5 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-4 text-xs">
           <i class="ph-bold ph-floppy-disk"></i> Új jelszó mentése
         </button>
       </form>
@@ -308,12 +308,13 @@
 
       <div id="authAlert" class="hidden mb-4 p-3 rounded-lg text-xs font-semibold"></div>
 
-      <form id="loginForm" class="space-y-4">
+      <!-- Az űrlap újratöltése natívan letiltva onsubmit="return false;" segítségével -->
+      <form id="loginForm" class="space-y-4" onsubmit="return false;">
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Felhasználónév</label>
           <div class="relative">
             <i class="ph ph-user absolute left-3 top-3 text-slate-400 text-base"></i>
-            <input type="text" id="loginUsername" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="admin vagy felhasználónév">
+            <input type="text" id="loginUsername" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="admin vagy felhasználónév" autocomplete="username">
           </div>
         </div>
 
@@ -321,11 +322,11 @@
           <label class="block text-xs font-semibold text-slate-300 mb-1">Jelszó</label>
           <div class="relative">
             <i class="ph ph-lock absolute left-3 top-3 text-slate-400 text-base"></i>
-            <input type="password" id="loginPassword" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="••••••••">
+            <input type="password" id="loginPassword" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="••••••••" autocomplete="current-password">
           </div>
         </div>
 
-        <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-2">
+        <button type="button" id="loginSubmitBtn" class="w-full py-2.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-2">
           <i class="ph-bold ph-sign-in"></i> Belépés
         </button>
       </form>
@@ -347,7 +348,7 @@
 
       <div id="adminUserAlert" class="hidden mb-3 p-2.5 rounded-lg text-xs font-semibold"></div>
 
-      <form id="adminUserForm" class="space-y-3">
+      <form id="adminUserForm" class="space-y-3" onsubmit="return false;">
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Teljes név</label>
           <input type="text" id="adminNewFullName" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="pl. Minta János">
@@ -361,7 +362,7 @@
           <input type="password" id="adminNewPassword" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="Legalább 4 karakter">
         </div>
 
-        <button type="submit" id="adminNewUserSubmitBtn" class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-4 text-xs">
+        <button type="button" id="adminNewUserSubmitBtn" class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-4 text-xs">
           <i class="ph-bold ph-check"></i> Profil létrehozása
         </button>
       </form>
@@ -373,7 +374,17 @@
     const SUPABASE_URL = "https://ngqqaaxerrcxuiqmykol.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncXFhYXhlcnJjeHVpcW15a29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MDA5MDQsImV4cCI6MjEwNjA3NjkwNH0.bUimk8oN2ezMMFuMWK8R0nvPbxxe6GcLR_fFTL0VLH0";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Biztonságos inicializálás
+    let supabaseClient = null;
+    try {
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } else {
+        alert("Hiba: A Supabase JS könyvtár nem töltődött be! Kérlek ellenőrizd az internetkapcsolatot vagy frissíts a Ctrl+F5 billentyűkkel.");
+      }
+    } catch (e) {
+      console.error("Supabase init error:", e);
+    }
 
     const SKILLS_DATA = [
       { id: "root", title: "Structural", category: "root", categoryName: "Központi Gyökér", parentId: null, icon: "ph-bold ph-shield-chevron", desc: "Szerkezeti, mechanikai és gyártási kompetenciafa központi kiindulópontja.", x: 2300, y: 80 },
@@ -465,25 +476,31 @@
        ========================================================================== */
     async function checkAuthSession() {
       const savedUsername = localStorage.getItem(STORAGE_KEY_SESSION_USER);
-      if (savedUsername) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('username', savedUsername)
-          .single();
+      if (savedUsername && supabaseClient) {
+        try {
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('username', savedUsername)
+            .maybeSingle();
 
-        if (profile) {
-          currentUserProfile = profile;
-          await loadAllProfilesAndInit();
-          hideAuthModal();
-          return;
+          if (profile) {
+            currentUserProfile = profile;
+            await loadAllProfilesAndInit();
+            hideAuthModal();
+            return;
+          }
+        } catch (e) {
+          console.error("Session check error:", e);
         }
       }
       showAuthModal();
     }
 
     async function loadAllProfilesAndInit() {
-      const { data: profiles, error } = await supabase
+      if (!supabaseClient) return;
+
+      const { data: profiles, error } = await supabaseClient
         .from('profiles')
         .select('*')
         .order('full_name');
@@ -508,25 +525,31 @@
       centerRootNode();
 
       // Valós idejű szinkronizáció
-      supabase
-        .channel('public:profiles')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
-          const { data: refreshed } = await supabase.from('profiles').select('*').order('full_name');
-          allProfiles = refreshed || [];
-          currentUserProfile = allProfiles.find(p => p.id === currentUserProfile.id) || currentUserProfile;
-          updateUIForUser();
-          renderTree();
-          updateProgressStats();
-        })
-        .subscribe();
+      try {
+        supabaseClient
+          .channel('public:profiles')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
+            const { data: refreshed } = await supabaseClient.from('profiles').select('*').order('full_name');
+            allProfiles = refreshed || [];
+            currentUserProfile = allProfiles.find(p => p.id === currentUserProfile.id) || currentUserProfile;
+            updateUIForUser();
+            renderTree();
+            updateProgressStats();
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn("Realtime sub warning:", e);
+      }
     }
 
     function showAuthModal() {
-      document.getElementById("authModal").classList.remove("hidden");
+      const modal = document.getElementById("authModal");
+      if (modal) modal.classList.remove("hidden");
     }
 
     function hideAuthModal() {
-      document.getElementById("authModal").classList.add("hidden");
+      const modal = document.getElementById("authModal");
+      if (modal) modal.classList.add("hidden");
     }
 
     function getActiveProfile() {
@@ -577,6 +600,7 @@
 
     function populateEngineerDropdown() {
       const select = document.getElementById("engineerSelect");
+      if (!select) return;
       select.innerHTML = "";
 
       allProfiles.forEach(p => {
@@ -609,6 +633,7 @@
 
     function updateProgressStats() {
       const profile = getActiveProfile();
+      if (!profile) return;
       const total = SKILLS_DATA.length;
       const unlockedCount = (profile.unlocked_skills || []).length;
       const percent = Math.round((unlockedCount / total) * 100);
@@ -624,8 +649,9 @@
       newlyUnlockedSkills.clear();
       newlyRevokedSkills.clear();
 
-      if (currentUserProfile.role === "admin") {
-        document.getElementById("changeNotificationBar").classList.add("hidden");
+      if (!currentUserProfile || currentUserProfile.role === "admin") {
+        const bar = document.getElementById("changeNotificationBar");
+        if (bar) bar.classList.add("hidden");
         return;
       }
 
@@ -646,12 +672,8 @@
 
       if (newlyUnlockedSkills.size > 0 || newlyRevokedSkills.size > 0) {
         let messages = [];
-        if (newlyUnlockedSkills.size > 0) {
-          messages.push(`<strong class="text-emerald-400">${newlyUnlockedSkills.size} új készség feloldva</strong>`);
-        }
-        if (newlyRevokedSkills.size > 0) {
-          messages.push(`<strong class="text-rose-400">${newlyRevokedSkills.size} készség visszavonva</strong>`);
-        }
+        if (newlyUnlockedSkills.size > 0) messages.push(`<strong class="text-emerald-400">${newlyUnlockedSkills.size} új készség feloldva</strong>`);
+        if (newlyRevokedSkills.size > 0) messages.push(`<strong class="text-rose-400">${newlyRevokedSkills.size} készség visszavonva</strong>`);
         notifText.innerHTML = messages.join(", ") + " (lásd a villogó elemeket a fán).";
         notifBar.classList.remove("hidden");
       } else {
@@ -660,7 +682,7 @@
 
       document.getElementById("dismissChangesBtn").onclick = async () => {
         const updatedList = Array.from(currentSkills);
-        await supabase
+        await supabaseClient
           .from('profiles')
           .update({ last_seen_skills: updatedList })
           .eq('id', currentUserProfile.id);
@@ -679,14 +701,17 @@
     function renderTree() {
       const nodesLayer = document.getElementById("nodesLayer");
       const connectionsLayer = document.getElementById("connectionsLayer");
+      if (!nodesLayer || !connectionsLayer) return;
+
       nodesLayer.innerHTML = "";
-      
       const defs = connectionsLayer.querySelector("defs").outerHTML;
       connectionsLayer.innerHTML = defs;
 
       const profile = getActiveProfile();
+      if (!profile) return;
+
       const unlockedSet = new Set(profile.unlocked_skills || ["root"]);
-      const isAdmin = (currentUserProfile.role === "admin");
+      const isAdmin = (currentUserProfile && currentUserProfile.role === "admin");
 
       SKILLS_DATA.forEach(skill => {
         const isVisible = (activeFilter === "all" || skill.category === "root" || skill.category === activeFilter);
@@ -778,6 +803,7 @@
 
     function drawConnections(unlockedSet) {
       const connectionsLayer = document.getElementById("connectionsLayer");
+      if (!connectionsLayer) return;
 
       SKILLS_DATA.forEach(skill => {
         if (!skill.parentId) return;
@@ -989,7 +1015,7 @@
       const currentList = profile.unlocked_skills || ["root"];
       if (!currentList.includes(skillId)) {
         const updated = [...currentList, skillId];
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('profiles')
           .update({ unlocked_skills: updated })
           .eq('id', profile.id);
@@ -1023,7 +1049,7 @@
       }
       revokeChildren(skillId);
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('profiles')
         .update({ unlocked_skills: updated })
         .eq('id', profile.id);
@@ -1177,109 +1203,125 @@
       const modal = document.getElementById("adminUserModal");
       const openBtn = document.getElementById("adminCreateUserBtn");
       const closeBtn = document.getElementById("adminUserModalCloseBtn");
-      const form = document.getElementById("adminUserForm");
       const alertBox = document.getElementById("adminUserAlert");
       const deleteBtn = document.getElementById("adminDeleteUserBtn");
       const submitBtn = document.getElementById("adminNewUserSubmitBtn");
 
-      openBtn.onclick = () => {
-        form.reset();
-        alertBox.classList.add("hidden");
-        modal.classList.remove("hidden");
-      };
+      if (openBtn) {
+        openBtn.onclick = () => {
+          document.getElementById("adminUserForm").reset();
+          alertBox.classList.add("hidden");
+          modal.classList.remove("hidden");
+        };
+      }
 
-      closeBtn.onclick = () => modal.classList.add("hidden");
-      modal.onclick = (e) => {
-        if (e.target.id === "adminUserModal") modal.classList.add("hidden");
-      };
+      if (closeBtn) closeBtn.onclick = () => modal.classList.add("hidden");
+      if (modal) {
+        modal.onclick = (e) => {
+          if (e.target.id === "adminUserModal") modal.classList.add("hidden");
+        };
+      }
 
-      form.onsubmit = async (e) => {
-        e.preventDefault();
-        const fullName = document.getElementById("adminNewFullName").value.trim();
-        const username = document.getElementById("adminNewUsername").value.trim().toLowerCase();
-        const password = document.getElementById("adminNewPassword").value;
+      if (submitBtn) {
+        submitBtn.onclick = async () => {
+          const fullName = document.getElementById("adminNewFullName").value.trim();
+          const username = document.getElementById("adminNewUsername").value.trim().toLowerCase();
+          const password = document.getElementById("adminNewPassword").value;
 
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Létrehozás...`;
+          if (!fullName || !username || !password) {
+            alertBox.textContent = "Kérlek tölts ki minden mezőt!";
+            alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+            return;
+          }
 
-        const { data, error } = await supabase.from('profiles').insert([{
-          username: username,
-          password: password,
-          full_name: fullName,
-          role: 'user',
-          unlocked_skills: ['root'],
-          last_seen_skills: ['root']
-        }]).select();
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Létrehozás...`;
 
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> Profil létrehozása`;
+          const { data, error } = await supabaseClient.from('profiles').insert([{
+            username: username,
+            password: password,
+            full_name: fullName,
+            role: 'user',
+            unlocked_skills: ['root'],
+            last_seen_skills: ['root']
+          }]).select();
 
-        if (error) {
-          alertBox.textContent = "Hiba: A felhasználónév már foglalt vagy adatbázishiba történt!";
-          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
-          return;
-        }
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> Profil létrehozása`;
 
-        modal.classList.add("hidden");
-        const { data: updatedProfiles } = await supabase.from('profiles').select('*').order('full_name');
-        allProfiles = updatedProfiles || [];
-        if (data && data[0]) {
-          activeViewingUserId = data[0].id;
-        }
-        populateEngineerDropdown();
-        renderTree();
-        updateProgressStats();
-      };
+          if (error) {
+            alertBox.textContent = "Hiba: A felhasználónév már létezik vagy adatbázishiba történt!";
+            alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+            return;
+          }
 
-      deleteBtn.onclick = async () => {
-        const target = getActiveProfile();
-        if (!target) return;
+          modal.classList.add("hidden");
+          const { data: updatedProfiles } = await supabaseClient.from('profiles').select('*').order('full_name');
+          allProfiles = updatedProfiles || [];
+          if (data && data[0]) {
+            activeViewingUserId = data[0].id;
+          }
+          populateEngineerDropdown();
+          renderTree();
+          updateProgressStats();
+        };
+      }
 
-        if (target.role === "admin" || target.username === "admin") {
-          alert("Adminisztrátori profilt nem lehet törölni!");
-          return;
-        }
+      if (deleteBtn) {
+        deleteBtn.onclick = async () => {
+          const target = getActiveProfile();
+          if (!target) return;
 
-        const confirmed = confirm(`Biztosan törölni szeretnéd "${target.full_name}" (@${target.username}) profilját a felhőből?`);
-        if (!confirmed) return;
+          if (target.role === "admin" || target.username === "admin") {
+            alert("Adminisztrátori profilt nem lehet törölni!");
+            return;
+          }
 
-        const { error } = await supabase.from('profiles').delete().eq('id', target.id);
-        if (error) {
-          alert("Hiba a törlés során: " + error.message);
-          return;
-        }
+          const confirmed = confirm(`Biztosan törölni szeretnéd "${target.full_name}" (@${target.username}) profilját a felhőből?`);
+          if (!confirmed) return;
 
-        allProfiles = allProfiles.filter(p => p.id !== target.id);
-        activeViewingUserId = allProfiles[0].id;
-        populateEngineerDropdown();
-        renderTree();
-        updateProgressStats();
-      };
+          const { error } = await supabaseClient.from('profiles').delete().eq('id', target.id);
+          if (error) {
+            alert("Hiba a törlés során: " + error.message);
+            return;
+          }
+
+          allProfiles = allProfiles.filter(p => p.id !== target.id);
+          activeViewingUserId = allProfiles[0].id;
+          populateEngineerDropdown();
+          renderTree();
+          updateProgressStats();
+        };
+      }
     }
 
     /* ==========================================================================
-       AUTHENTICATION (GOLYÓÁLLÓ HIBAKEZELÉSSEL)
+       AUTHENTICATION (KÖZVETLEN GOMB ESEMÉNYKEZELÉS)
        ========================================================================== */
     function setupAuth() {
-      const loginForm = document.getElementById("loginForm");
       const submitBtn = document.getElementById("loginSubmitBtn");
+      const usernameInput = document.getElementById("loginUsername");
+      const passwordInput = document.getElementById("loginPassword");
 
-      loginForm.onsubmit = async (e) => {
-        // Megakadályozzuk az oldal újratöltődését és a mezők kiürülését!
-        e.preventDefault();
-        e.stopPropagation();
-
-        const usernameInput = document.getElementById("loginUsername");
-        const passwordInput = document.getElementById("loginPassword");
+      async function performLogin() {
         const username = usernameInput.value.trim().toLowerCase();
         const password = passwordInput.value;
+
+        if (!username || !password) {
+          showAuthError("Kérlek add meg a felhasználónevet és a jelszót!");
+          return;
+        }
+
+        if (!supabaseClient) {
+          showAuthError("Adatbázis hiba: Nem sikerült inicializálni a kapcsolatot.");
+          return;
+        }
 
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Belépés...`;
 
         try {
-          // Lekérjük a profilt a felhasználónév alapján
-          const { data: profile, error } = await supabase
+          const { data: profile, error } = await supabaseClient
             .from('profiles')
             .select('*')
             .eq('username', username)
@@ -1289,13 +1331,13 @@
           submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
 
           if (error) {
-            console.error("Supabase hiba:", error);
+            console.error("Supabase lekérdezési hiba:", error);
             showAuthError("Adatbázis kapcsolódási hiba: " + error.message);
             return;
           }
 
           if (!profile) {
-            showAuthError("Nem létezik ilyen felhasználónév!");
+            showAuthError("Nem található ilyen felhasználónév!");
             return;
           }
 
@@ -1304,35 +1346,52 @@
             return;
           }
 
-          // Sikeres belépés
+          // Sikeres azonosítás
           currentUserProfile = profile;
           localStorage.setItem(STORAGE_KEY_SESSION_USER, username);
 
           await loadAllProfilesAndInit();
           hideAuthModal();
-          loginForm.reset();
+          document.getElementById("loginForm").reset();
 
         } catch (err) {
           console.error("Váratlan hiba:", err);
           submitBtn.disabled = false;
           submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
-          showAuthError("Váratlan hiba történt a belépéskor!");
+          showAuthError("Váratlan hiba történt a belépés során!");
         }
-      };
+      }
 
-      document.getElementById("logoutBtn").onclick = () => {
-        localStorage.removeItem(STORAGE_KEY_SESSION_USER);
-        currentUserProfile = null;
-        allProfiles = [];
-        activeViewingUserId = null;
-        showAuthModal();
-      };
+      // Kattintásra és Enter lenyomásra is reagál
+      if (submitBtn) submitBtn.onclick = performLogin;
+
+      usernameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") performLogin();
+      });
+      passwordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") performLogin();
+      });
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.onclick = () => {
+          localStorage.removeItem(STORAGE_KEY_SESSION_USER);
+          currentUserProfile = null;
+          allProfiles = [];
+          activeViewingUserId = null;
+          showAuthModal();
+        };
+      }
     }
 
     function showAuthError(msg) {
       const alert = document.getElementById("authAlert");
-      alert.textContent = msg;
-      alert.className = "mb-4 p-3 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+      if (alert) {
+        alert.textContent = msg;
+        alert.className = "mb-4 p-3 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+      } else {
+        window.alert(msg);
+      }
     }
 
     /* ==========================================================================
@@ -1342,61 +1401,66 @@
       const modal = document.getElementById("changePassModal");
       const openBtn = document.getElementById("openChangePassBtn");
       const closeBtn = document.getElementById("changePassCloseBtn");
-      const form = document.getElementById("changePassForm");
+      const saveBtn = document.getElementById("savePassBtn");
       const alertBox = document.getElementById("changePassAlert");
 
-      openBtn.onclick = () => {
-        form.reset();
-        alertBox.classList.add("hidden");
-        modal.classList.remove("hidden");
-      };
+      if (openBtn) {
+        openBtn.onclick = () => {
+          document.getElementById("changePassForm").reset();
+          alertBox.classList.add("hidden");
+          modal.classList.remove("hidden");
+        };
+      }
 
-      closeBtn.onclick = () => modal.classList.add("hidden");
-      modal.onclick = (e) => {
-        if (e.target.id === "changePassModal") modal.classList.add("hidden");
-      };
+      if (closeBtn) closeBtn.onclick = () => modal.classList.add("hidden");
+      if (modal) {
+        modal.onclick = (e) => {
+          if (e.target.id === "changePassModal") modal.classList.add("hidden");
+        };
+      }
 
-      form.onsubmit = async (e) => {
-        e.preventDefault();
-        const currentPass = document.getElementById("currentPassInput").value;
-        const newPass = document.getElementById("newPassInput").value;
-        const confirmPass = document.getElementById("confirmPassInput").value;
+      if (saveBtn) {
+        saveBtn.onclick = async () => {
+          const currentPass = document.getElementById("currentPassInput").value;
+          const newPass = document.getElementById("newPassInput").value;
+          const confirmPass = document.getElementById("confirmPassInput").value;
 
-        if (currentUserProfile.password !== currentPass) {
-          alertBox.textContent = "A jelenlegi jelszó helytelen!";
-          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
-          return;
-        }
+          if (currentUserProfile.password !== currentPass) {
+            alertBox.textContent = "A jelenlegi jelszó helytelen!";
+            alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+            return;
+          }
 
-        if (newPass.length < 4) {
-          alertBox.textContent = "Az új jelszónak legalább 4 karakternek kell lennie!";
-          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-amber-500/20 border border-amber-500/40 text-amber-300 block";
-          return;
-        }
+          if (newPass.length < 4) {
+            alertBox.textContent = "Az új jelszónak legalább 4 karakternek kell lennie!";
+            alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-amber-500/20 border border-amber-500/40 text-amber-300 block";
+            return;
+          }
 
-        if (newPass !== confirmPass) {
-          alertBox.textContent = "Az új jelszavak nem egyeznek!";
-          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
-          return;
-        }
+          if (newPass !== confirmPass) {
+            alertBox.textContent = "Az új jelszavak nem egyeznek!";
+            alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+            return;
+          }
 
-        const { error } = await supabase
-          .from('profiles')
-          .update({ password: newPass })
-          .eq('id', currentUserProfile.id);
+          const { error } = await supabaseClient
+            .from('profiles')
+            .update({ password: newPass })
+            .eq('id', currentUserProfile.id);
 
-        if (error) {
-          alertBox.textContent = "Hiba: " + error.message;
-          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
-          return;
-        }
+          if (error) {
+            alertBox.textContent = "Hiba: " + error.message;
+            alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+            return;
+          }
 
-        currentUserProfile.password = newPass;
-        alertBox.textContent = "✓ Jelszó sikeresen megváltoztatva!";
-        alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 block";
+          currentUserProfile.password = newPass;
+          alertBox.textContent = "✓ Jelszó sikeresen megváltoztatva!";
+          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 block";
 
-        setTimeout(() => modal.classList.add("hidden"), 1200);
-      };
+          setTimeout(() => modal.classList.add("hidden"), 1200);
+        };
+      }
     }
   </script>
 </body>
