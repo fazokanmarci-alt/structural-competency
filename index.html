@@ -46,44 +46,28 @@
       -webkit-user-select: none;
     }
 
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0c182c;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1e3a6d;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #38bdf8;
-    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0c182c; }
+    ::-webkit-scrollbar-thumb { background: #1e3a6d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
 
     @keyframes adminPulse {
       0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
       50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
     }
-    .ready-to-unlock {
-      animation: adminPulse 2.2s infinite;
-    }
+    .ready-to-unlock { animation: adminPulse 2.2s infinite; }
 
     @keyframes greenGlowPulse {
       0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); border-color: #10b981; }
       50% { box-shadow: 0 0 25px 8px rgba(16, 185, 129, 0.4); border-color: #34d399; }
     }
-    .newly-unlocked-pulse {
-      animation: greenGlowPulse 1.8s infinite ease-in-out;
-    }
+    .newly-unlocked-pulse { animation: greenGlowPulse 1.8s infinite ease-in-out; }
 
     @keyframes redGlowPulse {
       0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); border-color: #f43f5e; }
       50% { box-shadow: 0 0 25px 8px rgba(244, 63, 94, 0.4); border-color: #fb7185; }
     }
-    .newly-revoked-pulse {
-      animation: redGlowPulse 1.8s infinite ease-in-out;
-    }
+    .newly-revoked-pulse { animation: redGlowPulse 1.8s infinite ease-in-out; }
   </style>
 </head>
 <body class="bg-blueprint-900 text-slate-100 font-sans h-screen flex flex-col overflow-hidden no-select">
@@ -110,10 +94,19 @@
         <span class="hidden lg:inline">ADMIN:</span>
       </div>
       <label for="engineerSelect" class="text-xs text-slate-300">Profil:</label>
-      <select id="engineerSelect" class="bg-blueprint-900 border border-blueprint-line text-cyan-300 text-xs font-semibold rounded px-2 py-1 focus:outline-none focus:border-amber-400 cursor-pointer max-w-[170px] truncate">
+      <select id="engineerSelect" class="bg-blueprint-900 border border-blueprint-line text-cyan-300 text-xs font-semibold rounded px-2.5 py-1 focus:outline-none focus:border-amber-400 cursor-pointer max-w-[200px] truncate">
       </select>
 
-      <button id="adminCreateUserBtn" title="Új munkatárs regisztrálása" class="px-2 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded text-xs font-semibold flex items-center gap-1 transition">
+      <!-- Belépési adatok kijelző doboz az adminnak (User + Pass) -->
+      <div class="flex items-center gap-1.5 bg-blueprint-900/90 border border-blueprint-line px-2.5 py-1 rounded text-xs font-mono">
+        <i class="ph ph-key text-amber-400"></i>
+        <span id="adminCredentialsDisplay" class="text-amber-300 font-bold tracking-wider">••••••••</span>
+        <button id="adminTogglePasswordBtn" type="button" title="Adatok felfedése/elrejtése" class="text-slate-400 hover:text-white ml-1">
+          <i id="adminPasswordEyeIcon" class="ph ph-eye"></i>
+        </button>
+      </div>
+
+      <button id="adminCreateUserBtn" title="Új munkatárs hozzáadása" class="px-2 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded text-xs font-semibold flex items-center gap-1 transition">
         <i class="ph-bold ph-user-plus"></i> Új profil
       </button>
 
@@ -247,8 +240,7 @@
       <div class="p-6 space-y-4">
         <div>
           <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Követelmény és Kompetencia</h4>
-          <p id="modalDescription" class="text-slate-200 text-sm leading-relaxed bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line">
-          </p>
+          <p id="modalDescription" class="text-slate-200 text-sm leading-relaxed bg-blueprint-900/80 p-3 rounded-lg border border-blueprint-line"></p>
         </div>
 
         <div class="grid grid-cols-2 gap-3 text-xs">
@@ -284,8 +276,12 @@
 
       <form id="changePassForm" class="space-y-3">
         <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Jelenlegi jelszó</label>
+          <input type="password" id="currentPassInput" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="••••••••">
+        </div>
+        <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Új jelszó</label>
-          <input type="password" id="newPassInput" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="Legalább 6 karakter">
+          <input type="password" id="newPassInput" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="Legalább 4 karakter">
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Új jelszó megerősítése</label>
@@ -317,7 +313,7 @@
           <label class="block text-xs font-semibold text-slate-300 mb-1">Felhasználónév</label>
           <div class="relative">
             <i class="ph ph-user absolute left-3 top-3 text-slate-400 text-base"></i>
-            <input type="text" id="loginUsername" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="felhasználónév">
+            <input type="text" id="loginUsername" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400 placeholder:text-slate-500" placeholder="admin vagy felhasználónév">
           </div>
         </div>
 
@@ -362,7 +358,7 @@
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Kezdeti jelszó</label>
-          <input type="password" id="adminNewPassword" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="Legalább 6 karakter">
+          <input type="password" id="adminNewPassword" required class="w-full bg-blueprint-900 border border-blueprint-line rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-400" placeholder="Legalább 4 karakter">
         </div>
 
         <button type="submit" id="adminNewUserSubmitBtn" class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition shadow-md flex items-center justify-center gap-2 mt-4 text-xs">
@@ -372,13 +368,9 @@
     </div>
   </div>
 
-  <!-- ==================== LOGIKA (SUPABASE CLOUD INTEGRÁCIÓ) ==================== -->
+  <!-- ==================== LOGIKA (KÖZVETLEN CLOUD ADATBÁZIS) ==================== -->
   <script>
-    /* ==========================================================================
-       SUPABASE KLIENS INICIALIZÁLÁSA
-       ========================================================================== */
     const SUPABASE_URL = "https://ngqqaaxerrcxuiqmykol.supabase.co";
-    // IDE MÁSOLD BE A KÉPERNYŐRŐL AZ ANON KULCSOT A COPY GOMBBAL:
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ncXFhYXhlcnJjeHVpcW15a29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MDA5MDQsImV4cCI6MjEwNjA3NjkwNH0.bUimk8oN2ezMMFuMWK8R0nvPbxxe6GcLR_fFTL0VLH0";
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -442,11 +434,13 @@
     /* ==========================================================================
        ÁLLAPOT & VÁLTOZÓK
        ========================================================================== */
+    const STORAGE_KEY_SESSION_USER = "structural_app_logged_username";
     let currentUserProfile = null;
     let allProfiles = [];
     let activeViewingUserId = null;
     let activeFilter = "all";
     let selectedSkill = null;
+    let isCredentialsRevealed = false;
 
     let newlyUnlockedSkills = new Set();
     let newlyRevokedSkills = new Set();
@@ -467,39 +461,37 @@
     });
 
     /* ==========================================================================
-       SESSION & ADATBÁZIS LEKÉRDEZÉSEK
+       SESSION & FELHŐ ADATBÁZIS
        ========================================================================== */
     async function checkAuthSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await loadUserData(session.user.id);
-        hideAuthModal();
-      } else {
-        showAuthModal();
+      const savedUsername = localStorage.getItem(STORAGE_KEY_SESSION_USER);
+      if (savedUsername) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', savedUsername)
+          .single();
+
+        if (profile) {
+          currentUserProfile = profile;
+          await loadAllProfilesAndInit();
+          hideAuthModal();
+          return;
+        }
       }
+      showAuthModal();
     }
 
-    async function loadUserData(authUserId) {
-      // 1. Saját profil betöltése
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authUserId)
-        .single();
-
-      if (error || !profile) {
-        await supabase.auth.signOut();
-        showAuthModal();
-        return;
-      }
-
-      currentUserProfile = profile;
-
-      // 2. Összes profil lekérése (hogy az admin választhasson munkatársat)
-      const { data: profiles } = await supabase
+    async function loadAllProfilesAndInit() {
+      const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
         .order('full_name');
+
+      if (error) {
+        alert("Nem sikerült kapcsolódni az adatbázishoz: " + error.message);
+        return;
+      }
 
       allProfiles = profiles || [currentUserProfile];
 
@@ -515,12 +507,12 @@
       renderTree();
       centerRootNode();
 
-      // Realtime feliratkozás: ha valami változik a felhőben, azonnal frissül
+      // Valós idejű szinkronizáció
       supabase
         .channel('public:profiles')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
-          const { data: updatedProfiles } = await supabase.from('profiles').select('*').order('full_name');
-          allProfiles = updatedProfiles || [];
+          const { data: refreshed } = await supabase.from('profiles').select('*').order('full_name');
+          allProfiles = refreshed || [];
           currentUserProfile = allProfiles.find(p => p.id === currentUserProfile.id) || currentUserProfile;
           updateUIForUser();
           renderTree();
@@ -539,6 +531,22 @@
 
     function getActiveProfile() {
       return allProfiles.find(p => p.id === activeViewingUserId) || currentUserProfile;
+    }
+
+    function updateAdminCredentialsDisplay() {
+      const currentTarget = getActiveProfile();
+      const displayEl = document.getElementById("adminCredentialsDisplay");
+      const eyeIcon = document.getElementById("adminPasswordEyeIcon");
+
+      if (!currentTarget || !displayEl) return;
+
+      if (isCredentialsRevealed) {
+        displayEl.innerHTML = `<span class="text-cyan-300">@${currentTarget.username}</span> : <span class="text-amber-300">${currentTarget.password}</span>`;
+        if (eyeIcon) eyeIcon.className = "ph ph-eye-slash text-amber-400";
+      } else {
+        displayEl.textContent = "••••••••";
+        if (eyeIcon) eyeIcon.className = "ph ph-eye text-slate-400";
+      }
     }
 
     function updateUIForUser() {
@@ -581,11 +589,22 @@
         select.appendChild(option);
       });
 
+      updateAdminCredentialsDisplay();
+
       select.onchange = (e) => {
         activeViewingUserId = e.target.value;
+        updateAdminCredentialsDisplay();
         renderTree();
         updateProgressStats();
       };
+
+      const toggleBtn = document.getElementById("adminTogglePasswordBtn");
+      if (toggleBtn) {
+        toggleBtn.onclick = () => {
+          isCredentialsRevealed = !isCredentialsRevealed;
+          updateAdminCredentialsDisplay();
+        };
+      }
     }
 
     function updateProgressStats() {
@@ -861,7 +880,7 @@
     }
 
     /* ==========================================================================
-       MODAL & MŰVELETEK (SUPABASE ADATBÁZIS MENTÉSSEL)
+       MODAL & MŰVELETEK (KÖZVETLEN CLOUD ADATBÁZIS MENTÉSSEL)
        ========================================================================== */
     function openSkillModal(skill) {
       selectedSkill = skill;
@@ -1152,7 +1171,7 @@
     }
 
     /* ==========================================================================
-       ADMIN: ÚJ PROFIL ÉS TÖRLÉS (SUPABASE AUTH & TABLE)
+       ADMIN: ÚJ PROFIL ÉS TÖRLÉS
        ========================================================================== */
     function setupAdminUserManagement() {
       const modal = document.getElementById("adminUserModal");
@@ -1174,7 +1193,6 @@
         if (e.target.id === "adminUserModal") modal.classList.add("hidden");
       };
 
-      // Új profil regisztrálása Supabase Auth-ba
       form.onsubmit = async (e) => {
         e.preventDefault();
         const fullName = document.getElementById("adminNewFullName").value.trim();
@@ -1182,57 +1200,37 @@
         const password = document.getElementById("adminNewPassword").value;
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Létrehozás folyamatban...`;
+        submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Létrehozás...`;
 
-        // Egy belső email címet képzünk a felhasználónévből
-        const email = `${username}@structural.local`;
-
-        const { data, error } = await supabase.auth.signUp({
-          email: email,
+        const { data, error } = await supabase.from('profiles').insert([{
+          username: username,
           password: password,
-          options: {
-            data: {
-              username: username,
-              full_name: fullName,
-              role: 'user'
-            }
-          }
-        });
-
-        if (error) {
-          alertBox.textContent = "Hiba a regisztráció során: " + error.message;
-          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> Profil létrehozása`;
-          return;
-        }
-
-        // Beszúrjuk a profil táblába is
-        if (data.user) {
-          await supabase.from('profiles').insert([{
-            id: data.user.id,
-            username: username,
-            full_name: fullName,
-            role: 'user',
-            unlocked_skills: ['root'],
-            last_seen_skills: ['root']
-          }]);
-        }
+          full_name: fullName,
+          role: 'user',
+          unlocked_skills: ['root'],
+          last_seen_skills: ['root']
+        }]).select();
 
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> Profil létrehozása`;
-        modal.classList.add("hidden");
 
-        // Frissítjük a helyi listát
+        if (error) {
+          alertBox.textContent = "Hiba: A felhasználónév már foglalt vagy adatbázishiba történt!";
+          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+          return;
+        }
+
+        modal.classList.add("hidden");
         const { data: updatedProfiles } = await supabase.from('profiles').select('*').order('full_name');
         allProfiles = updatedProfiles || [];
-        activeViewingUserId = data.user.id;
+        if (data && data[0]) {
+          activeViewingUserId = data[0].id;
+        }
         populateEngineerDropdown();
         renderTree();
         updateProgressStats();
       };
 
-      // Profil törlése
       deleteBtn.onclick = async () => {
         const target = getActiveProfile();
         if (!target) return;
@@ -1260,7 +1258,7 @@
     }
 
     /* ==========================================================================
-       AUTHENTICATION (SUPABASE AUTH)
+       AUTHENTICATION (EGYSZERŰ, KÖZVETLEN CLOUD BEJELENTKEZÉS)
        ========================================================================== */
     function setupAuth() {
       const loginForm = document.getElementById("loginForm");
@@ -1270,31 +1268,36 @@
         e.preventDefault();
         const username = document.getElementById("loginUsername").value.trim().toLowerCase();
         const password = document.getElementById("loginPassword").value;
-        const email = `${username}@structural.local`;
 
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Belépés...`;
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
+        // Közvetlen hitelesítés az adatbázisból
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', username)
+          .eq('password', password)
+          .single();
 
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="ph-bold ph-sign-in"></i> Belépés`;
 
-        if (error) {
+        if (error || !profile) {
           showAuthError("Helytelen felhasználónév vagy jelszó!");
           return;
         }
 
-        await loadUserData(data.user.id);
+        currentUserProfile = profile;
+        localStorage.setItem(STORAGE_KEY_SESSION_USER, username);
+
+        await loadAllProfilesAndInit();
         hideAuthModal();
         loginForm.reset();
       };
 
-      document.getElementById("logoutBtn").onclick = async () => {
-        await supabase.auth.signOut();
+      document.getElementById("logoutBtn").onclick = () => {
+        localStorage.removeItem(STORAGE_KEY_SESSION_USER);
         currentUserProfile = null;
         allProfiles = [];
         activeViewingUserId = null;
@@ -1309,7 +1312,7 @@
     }
 
     /* ==========================================================================
-       JELSZÓVÁLTOZTATÁS (SUPABASE AUTH)
+       JELSZÓVÁLTOZTATÁS
        ========================================================================== */
     function setupChangePasswordModal() {
       const modal = document.getElementById("changePassModal");
@@ -1331,11 +1334,18 @@
 
       form.onsubmit = async (e) => {
         e.preventDefault();
+        const currentPass = document.getElementById("currentPassInput").value;
         const newPass = document.getElementById("newPassInput").value;
         const confirmPass = document.getElementById("confirmPassInput").value;
 
-        if (newPass.length < 6) {
-          alertBox.textContent = "Az új jelszónak legalább 6 karakternek kell lennie!";
+        if (currentUserProfile.password !== currentPass) {
+          alertBox.textContent = "A jelenlegi jelszó helytelen!";
+          alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
+          return;
+        }
+
+        if (newPass.length < 4) {
+          alertBox.textContent = "Az új jelszónak legalább 4 karakternek kell lennie!";
           alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-amber-500/20 border border-amber-500/40 text-amber-300 block";
           return;
         }
@@ -1346,13 +1356,18 @@
           return;
         }
 
-        const { error } = await supabase.auth.updateUser({ password: newPass });
+        const { error } = await supabase
+          .from('profiles')
+          .update({ password: newPass })
+          .eq('id', currentUserProfile.id);
+
         if (error) {
           alertBox.textContent = "Hiba: " + error.message;
           alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-rose-500/20 border border-rose-500/40 text-rose-300 block";
           return;
         }
 
+        currentUserProfile.password = newPass;
         alertBox.textContent = "✓ Jelszó sikeresen megváltoztatva!";
         alertBox.className = "mb-3 p-2.5 rounded-lg text-xs font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 block";
 
