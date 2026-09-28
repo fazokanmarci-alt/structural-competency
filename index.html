@@ -208,6 +208,13 @@
     </div>
   </main>
 
+  <!-- ==================== JOBB ALSÓ LEBEGŐ "EREDMÉNYEK" GOMB ==================== -->
+  <button id="openAchievementsBtn" class="fixed bottom-6 right-6 z-40 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.5)] flex items-center gap-2.5 transition-all duration-200 hover:scale-105 active:scale-95 border border-amber-300/60">
+    <i class="ph-bold ph-trophy text-2xl"></i>
+    <span class="text-sm tracking-wide">Eredmények</span>
+    <span id="achievementsCountBadge" class="bg-slate-950 text-amber-300 text-xs px-2 py-0.5 rounded-full font-mono font-bold">0</span>
+  </button>
+
   <!-- ==================== HOVER TOOLTIP ==================== -->
   <div id="skillTooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 border border-cyan-500/60 backdrop-blur-md rounded-lg p-3 text-xs w-72 shadow-2xl transition-opacity duration-150">
     <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-800">
@@ -267,6 +274,32 @@
         </div>
 
         <div id="modalActionArea" class="pt-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EREDMÉNYEK (ACHIEVEMENTS) MODAL ==================== -->
+  <div id="achievementsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-blueprint-850 border border-amber-500/40 w-full max-w-2xl max-h-[85vh] rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(245,158,11,0.2)] flex flex-col">
+      <div class="px-6 py-4 bg-blueprint-800 border-b border-blueprint-line flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 text-2xl">
+            <i class="ph-bold ph-trophy"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              Mérföldkövek és Eredmények
+            </h2>
+            <p class="text-xs text-slate-400" id="achievementsModalSubtitle">Teljesített mérnöki és műhelysikerek</p>
+          </div>
+        </div>
+        <button id="closeAchievementsBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-blueprint-700 text-xl">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      <!-- Görgethető lista -->
+      <div class="p-6 overflow-y-auto space-y-3.5 flex-1" id="achievementsListContainer">
       </div>
     </div>
   </div>
@@ -458,6 +491,18 @@
     ];
 
     /* ==========================================================================
+       EREDMÉNYEK (ACHIEVEMENTS) ADATBÁZIS
+       ========================================================================== */
+    const ACHIEVEMENTS_DATA = [
+      { id: "achv_20h", title: "Heti 20 óra aktív munka", icon: "ph-bold ph-clock", desc: "Legalább heti 20 igazolt óra aktív műhelymunkát vagy tervezést végzett a csapatban." },
+      { id: "achv_40h", title: "Heti 40 óra intenzív munka", icon: "ph-bold ph-lightning", desc: "Kiemelkedő, teljes heti elköteleződés és legalább 40 munkaóra a projekt sikeréért." },
+      { id: "achv_workshop_safety", title: "Műhelybiztonsági Mester", icon: "ph-bold ph-shield-check", desc: "Példamutató munkavédelem, védőfelszerelés-használat és a biztonsági szabályok betartása." },
+      { id: "achv_project_lead", title: "Önálló Részprojekt Vezető", icon: "ph-bold ph-flag", desc: "Sikeresen levezényelt egy teljes alkatrész- vagy részegység-fejlesztési folyamatot." },
+      { id: "achv_cad_milestone", title: "Tervezési Mérföldkő", icon: "ph-bold ph-compass-tool", desc: "Első, gyártásra teljesen kész szerkezeti főösszeállítás sikeres leadása és jóváhagyása." },
+      { id: "achv_team_mentor", title: "Csapat Mentor", icon: "ph-bold ph-users-three", desc: "Aktív segítségnyújtás és szakmai tudásátadás az új csapattagok beilleszkedésében." }
+    ];
+
+    /* ==========================================================================
        ÁLLAPOT & VÁLTOZÓK
        ========================================================================== */
     const STORAGE_KEY_SESSION_USER = "structural_app_logged_username";
@@ -487,6 +532,7 @@
       setupAuth();
       setupChangePasswordModal();
       setupAdminUserManagement();
+      setupAchievementsModal();
       await checkAuthSession();
     });
 
@@ -544,12 +590,14 @@
 
       currentUserProfile = allProfiles.find(item => item.id === currentUserProfile.id) || currentUserProfile;
 
+      // BELÉPÉSKOR MINDIG VISSZAÁLL AZ ÖSSZES ÁG SZŰRŐ!
+      resetFilterToAll();
+
       updateUIForUser();
       detectProfileChanges();
       renderTree();
       centerRootNode();
 
-      // Valós idejű szinkronizáció (Realtime)
       if (!realtimeChannel && supabaseClient) {
         try {
           realtimeChannel = supabaseClient
@@ -564,9 +612,10 @@
                 currentUserProfile = allProfiles.find(item => item.id === currentUserProfile.id) || currentUserProfile;
                 
                 updateUIForUser();
-                detectProfileChanges(); // Azonnal frissíti az értesítési sávot is élőben
+                detectProfileChanges();
                 renderTree();
                 updateProgressStats();
+                updateAchievementsBadge();
               }
             })
             .subscribe();
@@ -574,6 +623,18 @@
           console.warn("Realtime sub warning:", e);
         }
       }
+    }
+
+    function resetFilterToAll() {
+      activeFilter = "all";
+      const filterBtns = document.querySelectorAll(".filter-btn");
+      filterBtns.forEach(btn => {
+        if (btn.dataset.filter === "all") {
+          btn.className = "filter-btn px-3 py-1 rounded bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-medium transition shrink-0";
+        } else {
+          btn.className = "filter-btn px-3 py-1 rounded bg-blueprint-800 hover:bg-blueprint-700 border border-blueprint-line text-slate-300 font-medium transition shrink-0";
+        }
+      });
     }
 
     function showAuthModal() {
@@ -641,6 +702,7 @@
       }
 
       updateProgressStats();
+      updateAchievementsBadge();
     }
 
     function populateEngineerDropdown() {
@@ -665,6 +727,7 @@
         updateAdminCredentialsDisplay();
         renderTree();
         updateProgressStats();
+        updateAchievementsBadge();
       };
 
       const toggleBtn = document.getElementById("adminTogglePasswordBtn");
@@ -680,7 +743,10 @@
       const profile = getActiveProfile();
       if (!profile) return;
       const total = SKILLS_DATA.length;
-      const unlockedCount = (profile.unlocked_skills || []).length;
+      
+      // Csak a tényleges készségeket számoljuk, az achv_-ket kizárjuk
+      const unlockedSkillList = (profile.unlocked_skills || []).filter(id => !id.startsWith("achv_"));
+      const unlockedCount = unlockedSkillList.length;
       const percent = Math.round((unlockedCount / total) * 100);
 
       document.getElementById("statsProgress").textContent = `${unlockedCount} / ${total} (${percent}%)`;
@@ -717,9 +783,9 @@
 
       if (newlyUnlockedSkills.size > 0 || newlyRevokedSkills.size > 0) {
         let messages = [];
-        if (newlyUnlockedSkills.size > 0) messages.push(`<strong class="text-emerald-400">${newlyUnlockedSkills.size} új készség feloldva</strong>`);
-        if (newlyRevokedSkills.size > 0) messages.push(`<strong class="text-rose-400">${newlyRevokedSkills.size} készség visszavonva</strong>`);
-        notifText.innerHTML = messages.join(", ") + " (lásd a villogó elemeket a fán).";
+        if (newlyUnlockedSkills.size > 0) messages.push(`<strong class="text-emerald-400">${newlyUnlockedSkills.size} új készség/eredmény feloldva</strong>`);
+        if (newlyRevokedSkills.size > 0) messages.push(`<strong class="text-rose-400">${newlyRevokedSkills.size} készség/eredmény visszavonva</strong>`);
+        notifText.innerHTML = messages.join(", ") + " (lásd a jelöléseket).";
         notifBar.classList.remove("hidden");
       } else {
         notifBar.classList.add("hidden");
@@ -729,7 +795,6 @@
         const updatedList = Array.from(currentSkills);
         
         try {
-          // Biztonságos RPC hívás az értesítés rögzítéséhez a felhőben
           await supabaseClient.rpc('update_last_seen_skills', {
             p_username: currentUserProfile.username,
             p_password: currentUserProfile.password,
@@ -958,7 +1023,7 @@
     }
 
     /* ==========================================================================
-       MODAL & MŰVELETEK (FIX KÉPERNYŐ-ALAPÚ MÉRET + PC-n EGGYEL NAGYOBB)
+       MODAL & MŰVELETEK
        ========================================================================== */
     function openSkillModal(skill) {
       selectedSkill = skill;
@@ -1147,6 +1212,143 @@
     }
 
     /* ==========================================================================
+       EREDMÉNYEK (ACHIEVEMENTS) LOGIKA
+       ========================================================================== */
+    function updateAchievementsBadge() {
+      const profile = getActiveProfile();
+      if (!profile) return;
+      const unlockedList = profile.unlocked_skills || [];
+      const count = ACHIEVEMENTS_DATA.filter(a => unlockedList.includes(a.id)).length;
+      
+      const badge = document.getElementById("achievementsCountBadge");
+      if (badge) badge.textContent = `${count} / ${ACHIEVEMENTS_DATA.length}`;
+    }
+
+    function setupAchievementsModal() {
+      const openBtn = document.getElementById("openAchievementsBtn");
+      const closeBtn = document.getElementById("closeAchievementsBtn");
+      const modal = document.getElementById("achievementsModal");
+
+      if (openBtn) {
+        openBtn.onclick = () => {
+          renderAchievementsList();
+          modal.classList.remove("hidden");
+        };
+      }
+
+      if (closeBtn) closeBtn.onclick = () => modal.classList.add("hidden");
+      if (modal) {
+        modal.onclick = (e) => {
+          if (e.target.id === "achievementsModal") modal.classList.add("hidden");
+        };
+      }
+    }
+
+    function renderAchievementsList() {
+      const container = document.getElementById("achievementsListContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const profile = getActiveProfile();
+      if (!profile) return;
+
+      const unlockedSet = new Set(profile.unlocked_skills || []);
+      const isAdmin = (currentUserProfile && currentUserProfile.role === "admin");
+
+      document.getElementById("achievementsModalSubtitle").textContent = 
+        `Munkatárs: ${profile.full_name} (${(profile.unlocked_skills || []).filter(id => id.startsWith("achv_")).length} / ${ACHIEVEMENTS_DATA.length} teljesítve)`;
+
+      ACHIEVEMENTS_DATA.forEach(achv => {
+        const isUnlocked = unlockedSet.has(achv.id);
+        const itemEl = document.createElement("div");
+
+        let borderClass = isUnlocked 
+          ? "border-amber-400/80 bg-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]" 
+          : "border-blueprint-line bg-blueprint-900/60 opacity-60";
+        let iconColor = isUnlocked ? "text-amber-400 bg-amber-500/20" : "text-slate-500 bg-slate-800";
+
+        itemEl.className = `p-4 rounded-xl border ${borderClass} flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all`;
+
+        let actionHtml = "";
+        if (isAdmin) {
+          if (isUnlocked) {
+            actionHtml = `
+              <button onclick="toggleAchievement('${achv.id}', false)" class="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0">
+                <i class="ph-bold ph-lock-key"></i> Visszavonás
+              </button>
+            `;
+          } else {
+            actionHtml = `
+              <button onclick="toggleAchievement('${achv.id}', true)" class="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0">
+                <i class="ph-bold ph-check"></i> Feloldás
+              </button>
+            `;
+          }
+        } else {
+          actionHtml = isUnlocked
+            ? `<span class="px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0"><i class="ph-bold ph-trophy"></i> Teljesítve</span>`
+            : `<span class="px-3 py-1 bg-slate-800 text-slate-500 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0"><i class="ph ph-lock"></i> Folyamatban</span>`;
+        }
+
+        itemEl.innerHTML = `
+          <div class="flex items-start sm:items-center gap-3.5 flex-1">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 ${iconColor} border border-amber-400/30">
+              <i class="${achv.icon}"></i>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                ${achv.title}
+                ${isUnlocked ? '<span class="text-amber-400 text-xs">★</span>' : ''}
+              </h4>
+              <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">${achv.desc}</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-end">
+            ${actionHtml}
+          </div>
+        `;
+
+        container.appendChild(itemEl);
+      });
+    }
+
+    async function toggleAchievement(achvId, shouldUnlock) {
+      const profile = getActiveProfile();
+      if (!profile) return;
+
+      let currentList = profile.unlocked_skills || ["root"];
+      let updated;
+
+      if (shouldUnlock) {
+        if (!currentList.includes(achvId)) {
+          updated = [...currentList, achvId];
+        } else {
+          updated = currentList;
+        }
+      } else {
+        updated = currentList.filter(id => id !== achvId);
+      }
+
+      const { error } = await supabaseClient.rpc('admin_update_skills', {
+        p_admin_username: currentUserProfile.username,
+        p_admin_password: currentUserProfile.password,
+        p_target_id: profile.id,
+        p_unlocked: updated
+      });
+
+      if (error) {
+        alert("Hiba a mentés során: " + error.message);
+        return;
+      }
+
+      profile.unlocked_skills = updated;
+      renderAchievementsList();
+      updateAchievementsBadge();
+      updateProgressStats();
+    }
+    window.toggleAchievement = toggleAchievement;
+
+    /* ==========================================================================
        PAN & ZOOM + TOUCH
        ========================================================================== */
     function clampPan(x, y, currentScale) {
@@ -1190,7 +1392,8 @@
           e.target.closest("button") || 
           e.target.closest(".filter-btn") || 
           e.target.closest("#adminUserSelectorContainer") ||
-          e.target.closest("#skillModal")
+          e.target.closest("#skillModal") ||
+          e.target.closest("#achievementsModal")
         ) return;
 
         isDragging = true;
@@ -1212,7 +1415,8 @@
           e.target.closest("button") || 
           e.target.closest(".filter-btn") || 
           e.target.closest("#adminUserSelectorContainer") ||
-          e.target.closest("#skillModal")
+          e.target.closest("#skillModal") ||
+          e.target.closest("#achievementsModal")
         ) return;
 
         if (e.touches.length === 1) {
@@ -1368,6 +1572,7 @@
           populateEngineerDropdown();
           renderTree();
           updateProgressStats();
+          updateAchievementsBadge();
         };
       }
 
@@ -1401,6 +1606,7 @@
           populateEngineerDropdown();
           renderTree();
           updateProgressStats();
+          updateAchievementsBadge();
         };
       }
     }
