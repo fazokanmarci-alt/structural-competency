@@ -68,6 +68,20 @@
       50% { box-shadow: 0 0 25px 8px rgba(244, 63, 94, 0.4); border-color: #fb7185; }
     }
     .newly-revoked-pulse { animation: redGlowPulse 1.8s infinite ease-in-out; }
+
+    /* Aranysárga pulzálás új eredményekhez */
+    @keyframes goldGlowPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.9); border-color: #f59e0b; }
+      50% { box-shadow: 0 0 28px 10px rgba(245, 158, 11, 0.45); border-color: #fbbf24; }
+    }
+    .newly-unlocked-gold-pulse { animation: goldGlowPulse 1.7s infinite ease-in-out; }
+
+    /* Lila pulzálás visszavont eredményekhez */
+    @keyframes purpleGlowPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.9); border-color: #a855f7; }
+      50% { box-shadow: 0 0 28px 10px rgba(168, 85, 247, 0.45); border-color: #c084fc; }
+    }
+    .newly-revoked-purple-pulse { animation: purpleGlowPulse 1.7s infinite ease-in-out; }
   </style>
 </head>
 <body class="bg-blueprint-900 text-slate-100 font-sans h-screen flex flex-col overflow-hidden no-select">
@@ -208,7 +222,7 @@
     </div>
   </main>
 
-  <!-- ==================== JOBB ALSÓ LEBEGŐ "EREDMÉNYEK" GOMB ==================== -->
+  <!-- ==================== JOBB ALSÓ LEBEGŐ "EREDMÉNYEK" GOMB (Villogás támogatással) ==================== -->
   <button id="openAchievementsBtn" class="fixed bottom-6 right-6 z-40 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.5)] flex items-center gap-2.5 transition-all duration-200 hover:scale-105 active:scale-95 border border-amber-300/60">
     <i class="ph-bold ph-trophy text-2xl"></i>
     <span class="text-sm tracking-wide">Eredmények</span>
@@ -590,7 +604,6 @@
 
       currentUserProfile = allProfiles.find(item => item.id === currentUserProfile.id) || currentUserProfile;
 
-      // BELÉPÉSKOR MINDIG VISSZAÁLL AZ ÖSSZES ÁG SZŰRŐ!
       resetFilterToAll();
 
       updateUIForUser();
@@ -744,7 +757,6 @@
       if (!profile) return;
       const total = SKILLS_DATA.length;
       
-      // Csak a tényleges készségeket számoljuk, az achv_-ket kizárjuk
       const unlockedSkillList = (profile.unlocked_skills || []).filter(id => !id.startsWith("achv_"));
       const unlockedCount = unlockedSkillList.length;
       const percent = Math.round((unlockedCount / total) * 100);
@@ -763,6 +775,7 @@
       if (!currentUserProfile || currentUserProfile.role === "admin") {
         const bar = document.getElementById("changeNotificationBar");
         if (bar) bar.classList.add("hidden");
+        updateAchievementsBadge();
         return;
       }
 
@@ -785,11 +798,13 @@
         let messages = [];
         if (newlyUnlockedSkills.size > 0) messages.push(`<strong class="text-emerald-400">${newlyUnlockedSkills.size} új készség/eredmény feloldva</strong>`);
         if (newlyRevokedSkills.size > 0) messages.push(`<strong class="text-rose-400">${newlyRevokedSkills.size} készség/eredmény visszavonva</strong>`);
-        notifText.innerHTML = messages.join(", ") + " (lásd a jelöléseket).";
+        notifText.innerHTML = messages.join(", ") + " (lásd a jelöléseket a fán és az eredményeknél).";
         notifBar.classList.remove("hidden");
       } else {
         notifBar.classList.add("hidden");
       }
+
+      updateAchievementsBadge();
 
       document.getElementById("dismissChangesBtn").onclick = async () => {
         const updatedList = Array.from(currentSkills);
@@ -809,6 +824,10 @@
         newlyRevokedSkills.clear();
         notifBar.classList.add("hidden");
         renderTree();
+        updateAchievementsBadge();
+        if (!document.getElementById("achievementsModal").classList.contains("hidden")) {
+          renderAchievementsList();
+        }
       };
     }
 
@@ -1212,7 +1231,7 @@
     }
 
     /* ==========================================================================
-       EREDMÉNYEK (ACHIEVEMENTS) LOGIKA
+       EREDMÉNYEK (ACHIEVEMENTS) LOGIKA & VILLOGÁS KEZELÉSE
        ========================================================================== */
     function updateAchievementsBadge() {
       const profile = getActiveProfile();
@@ -1222,6 +1241,27 @@
       
       const badge = document.getElementById("achievementsCountBadge");
       if (badge) badge.textContent = `${count} / ${ACHIEVEMENTS_DATA.length}`;
+
+      // Gomb pulzálásának ellenőrzése
+      const btn = document.getElementById("openAchievementsBtn");
+      if (!btn) return;
+
+      btn.classList.remove("newly-unlocked-gold-pulse", "newly-revoked-purple-pulse");
+
+      // Ellenőrizzük, hogy van-e nyugtázatlan eredmény
+      let hasNewAchievementUnlock = false;
+      let hasNewAchievementRevoke = false;
+
+      ACHIEVEMENTS_DATA.forEach(a => {
+        if (newlyUnlockedSkills.has(a.id)) hasNewAchievementUnlock = true;
+        if (newlyRevokedSkills.has(a.id)) hasNewAchievementRevoke = true;
+      });
+
+      if (hasNewAchievementUnlock) {
+        btn.classList.add("newly-unlocked-gold-pulse");
+      } else if (hasNewAchievementRevoke) {
+        btn.classList.add("newly-revoked-purple-pulse");
+      }
     }
 
     function setupAchievementsModal() {
@@ -1260,12 +1300,27 @@
 
       ACHIEVEMENTS_DATA.forEach(achv => {
         const isUnlocked = unlockedSet.has(achv.id);
+        const isNewlyUnlocked = newlyUnlockedSkills.has(achv.id);
+        const isNewlyRevoked = newlyRevokedSkills.has(achv.id);
+
         const itemEl = document.createElement("div");
 
-        let borderClass = isUnlocked 
-          ? "border-amber-400/80 bg-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]" 
-          : "border-blueprint-line bg-blueprint-900/60 opacity-60";
-        let iconColor = isUnlocked ? "text-amber-400 bg-amber-500/20" : "text-slate-500 bg-slate-800";
+        let borderClass = "";
+        let iconColor = "";
+
+        if (isNewlyUnlocked) {
+          borderClass = "border-amber-400 bg-amber-950/40 newly-unlocked-gold-pulse";
+          iconColor = "text-amber-300 bg-amber-500/30";
+        } else if (isNewlyRevoked) {
+          borderClass = "border-purple-500 bg-purple-950/40 newly-revoked-purple-pulse";
+          iconColor = "text-purple-300 bg-purple-500/30";
+        } else if (isUnlocked) {
+          borderClass = "border-amber-400/80 bg-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]";
+          iconColor = "text-amber-400 bg-amber-500/20";
+        } else {
+          borderClass = "border-blueprint-line bg-blueprint-900/60 opacity-60";
+          iconColor = "text-slate-500 bg-slate-800";
+        }
 
         itemEl.className = `p-4 rounded-xl border ${borderClass} flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all`;
 
@@ -1285,9 +1340,15 @@
             `;
           }
         } else {
-          actionHtml = isUnlocked
-            ? `<span class="px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0"><i class="ph-bold ph-trophy"></i> Teljesítve</span>`
-            : `<span class="px-3 py-1 bg-slate-800 text-slate-500 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0"><i class="ph ph-lock"></i> Folyamatban</span>`;
+          if (isNewlyUnlocked) {
+            actionHtml = `<span class="px-3 py-1 bg-amber-400 text-slate-950 rounded-lg text-xs font-black flex items-center gap-1 shrink-0 animate-pulse">★ ÚJ TELJESÍTÉS</span>`;
+          } else if (isNewlyRevoked) {
+            actionHtml = `<span class="px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-bold flex items-center gap-1 shrink-0 animate-pulse">✕ VISSZAVONVA</span>`;
+          } else if (isUnlocked) {
+            actionHtml = `<span class="px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0"><i class="ph-bold ph-trophy"></i> Teljesítve</span>`;
+          } else {
+            actionHtml = `<span class="px-3 py-1 bg-slate-800 text-slate-500 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0"><i class="ph ph-lock"></i> Folyamatban</span>`;
+          }
         }
 
         itemEl.innerHTML = `
