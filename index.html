@@ -449,11 +449,11 @@
     }
 
     const SKILLS_DATA = [
-      { id: "root", title: "Structural", category: "root", categoryName: "Központi Gyökér", parentId: null, icon: "ph-bold ph-shield-chevron", desc: "Szerkezeti, mechanikai és gyártási kompetenciafa központi kiindulópontja.", x: 2300, y: 80 },
+      { id: "root", title: "Structural", category: "root", categoryName: "Központi Gyökér", parentId: null, icon: "ph-bold ph-shield-chevron", desc: "Szerkezeti, mechanikai és gyártási kompetenciafa központi kiindulópontja.", x: 2450, y: 80 },
       { id: "comp_theory", title: "Kompozit elméleti alapok", category: "composite", categoryName: "Kompozit Elmélet", parentId: "root", icon: "ph ph-stack-simple", desc: "Szál- és gyantarandzserek, anizotrópia, rétegrend alapismeretek.", x: 650, y: 260 },
       { id: "metal_theory", title: "Fémes elméleti alapok", category: "metallic", categoryName: "Fémes Elmélet", parentId: "root", icon: "ph ph-atom", desc: "Kristályszerkezetek, fázisdiagramok, ötvözők, hőkezelések és szilárdságtan alapok.", x: 1800, y: 260 },
       { id: "poly_theory", title: "Polimer elméleti alapok", category: "polymer", categoryName: "Polimer Elmélet", parentId: "root", icon: "ph ph-dna", desc: "Hőre lágyuló és hőre keményedő polimerek, reológia és degradáció alapok.", x: 3050, y: 260 },
-      { id: "miscellaneous", title: "Egyéb készségek", category: "miscellaneous", categoryName: "Nem anyagfüggő készségek", parentId: "root", icon: "ph ph-briefcase", desc: "Minden mérnöki készség, ami nem anyagfüggő.", x: 4000, y: 260 },
+      { id: "miscellaneous", title: "Egyéb készségek", category: "miscellaneous", categoryName: "Nem anyagfüggő készségek", parentId: "root", icon: "ph ph-briefcase", desc: "Minden mérnöki készség, ami nem anyagfüggő.", x: 4300, y: 260 },
 
       { id: "comp_des_basic", title: "Kompozit tervezési alapok", category: "composite", categoryName: "Kompozit Tervezés", parentId: "comp_theory", icon: "ph ph-ruler", desc: "Klasszikus rétegelmélet (CLT), terhelési irányok és szálirányok.", x: 420, y: 470 },
       { id: "comp_des_adv", title: "Kompozit tervezés haladó", category: "composite", categoryName: "Kompozit Tervezés", parentId: "comp_des_basic", icon: "ph ph-rows", desc: "Szendvicsszerkezetek tervezése, maganyagok, tönkremeneteli kritériumok.", x: 420, y: 680 },
@@ -496,12 +496,16 @@
       { id: "sla_adv", title: "SLA haladó", category: "polymer", categoryName: "SLA Nyomtatás", parentId: "sla_basic", icon: "ph ph-sun", desc: "Mikrotámaszok tervezése, orientálás, réteglehúzási erők kompenzálása és UV keményítési profilok.", x: 3370, y: 680 },
       { id: "sla_master", title: "SLA mester", category: "polymer", categoryName: "SLA Nyomtatás", parentId: "sla_adv", icon: "ph ph-sketch-logo", desc: "Kerámiatöltésű és biokompatibilis mérnöki rezinek feldolgozása, optikai felületminőség.", x: 3370, y: 890 },
 
-      { id: "misc_eng_basic", title: "Angol nyelvtudás közép szinten", category: "miscellaneous", categoryName: "Angol", parentId: "miscellaneous", icon: "ph ph-translate", desc: "Az angol nyelv elfogadható, legalább B2 szintű használata.", x: 3700, y: 470 },
-      { id: "misc_eng_adv", title: "Angol nyelvtudás emelt szinten", category: "miscellaneous", categoryName: "Angol", parentId: "misc_eng_basic", icon: "ph ph-chat-centered-text", desc: "Az angol nyelv magabiztos, legalább C1 szintű használata.", x: 3700, y: 680 },
+      { id: "misc_eng_basic", title: "Angol nyelvtudás közép szinten", category: "miscellaneous", categoryName: "Angol nyelv", parentId: "miscellaneous", icon: "ph ph-translate", desc: "Az angol nyelv elfogadható, legalább B2 szintű használata.", x: 3700, y: 470 },
+      { id: "misc_eng_adv", title: "Angol nyelvtudás emelt szinten", category: "miscellaneous", categoryName: "Angol nyelv", parentId: "misc_eng_basic", icon: "ph ph-chat-centered-text", desc: "Az angol nyelv magabiztos, legalább C1 szintű használata.", x: 3700, y: 680 },
       { id: "misc_cad_basic", title: "CAD tervezési alapok", category: "miscellaneous", categoryName: "CAD használat", parentId: "miscellaneous", icon: "ph ph-pencil-line", desc: "Egyszerűbb alkatrészek és összeállítások tervezése.", x: 4000, y: 470 },
       { id: "misc_cad_adv", title: "CAD tervezés haladó", category: "miscellaneous", categoryName: "CAD használat", parentId: "misc_cad_basic", icon: "ph ph-cube-transparent", desc: "Bonyolultabb alkatrészek tervezése, a TOP-DOWN és a BOTTOM-UP tervezés ismerete, paraméteres tervezés.", x: 4000, y: 680 },
-      { id: "misc_rendering_basic", title: "Alkatrészek és összeállítások renderelési alapjai", category: "miscellaneous", categoryName: "Renderelés alapok", parentId: "miscellaneous", icon: "ph ph-paint-brush-broad", desc: "Alapszintű, CAD szoftverbeli renderelési készség.", x: 4300, y: 470 },
-      { id: "misc_rendering_adv", title: "Alkatrészek és összeállítások renderelése haladó szinten", category: "miscellaneous", categoryName: "Renderelés haladó", parentId: "misc_rendering_basic", icon: "ph ph-projector-screen", desc: "Blender-beli valósághű textúrázás, fénybeállítások és professzionális termékvizualizáció.", x: 4300, y: 680 }
+      { id: "misc_rendering_basic", title: "Renderelés alapok", category: "miscellaneous", categoryName: "Renderelés", parentId: "miscellaneous", icon: "ph ph-paint-brush-broad", desc: "Alkatrészek és összeállítások renderelési alapjai, alapszintű, CAD szoftverbeli renderelési készségek.", x: 4300, y: 470 },
+      { id: "misc_rendering_adv", title: "Renderelés haladó", category: "miscellaneous", categoryName: "Renderelés", parentId: "misc_rendering_basic", icon: "ph ph-projector-screen", desc: "Blender-beli valósághű textúrázás, fénybeállítások és professzionális termékvizualizáció.", x: 4300, y: 680 },
+       { id: "misc_drawing_basic", title: "Műszaki rajzolás alapok", category: "miscellaneous", categoryName: "Műszaki rajzok", parentId: "miscellaneous", icon: "ph ph-pencil-ruler", desc: "Alkatrész és összeállítási rajzok műszaki szabályainak, szabványainak alapszintű ismerete, egyszerűbb rajzok, robbantott ábrák készítése.", x: 4600, y: 470 },
+      { id: "misc_drawing_adv", title: "Műszaki rajzolás haladó", category: "miscellaneous", categoryName: "Műszaki rajzok", parentId: "misc_drawing_basic", icon: "ph ph-bezier-curve", desc: "Alkatrész és összeállítási rajzok műszaki szabályainak, szabványainak mély ismerete, komplex rajzok készítése.", x: 4600, y: 680 },
+       { id: "misc_topopt_basic", title: "Topológiai optimalizáció alapok", category: "miscellaneous", categoryName: "TopOpt", parentId: "miscellaneous", icon: "ph ph-log", desc: "Tetszőleges TopOpt szoftver alapszintű ismerete, a topológiai optimalizáció elvi alapjai.", x: 4900, y: 470 },
+      { id: "misc_topopt_adv", title: "Topológiai optimalizáció haladó", category: "miscellaneous", categoryName: "TopOpt", parentId: "misc_topopt_basic", icon: "ph ph-git-branch", desc: "Tetszőleges TopOpt szoftver beható ismerete, magabiztos használata.", x: 4900, y: 680 }
     ];
 
     /* ==========================================================================
@@ -1540,7 +1544,7 @@
     function centerRootNode() {
       const viewport = document.getElementById("viewport");
       scale = 0.35;
-      panX = (viewport.clientWidth / 2) - (2300 * scale);
+      panX = (viewport.clientWidth / 2) - (2450 * scale);
       panY = 40;
 
       const clamped = clampPan(panX, panY, scale);
